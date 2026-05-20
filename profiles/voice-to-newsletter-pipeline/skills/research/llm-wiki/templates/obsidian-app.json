@@ -1,0 +1,26 @@
+{
+  "alwaysUpdateLinks": true,
+  "attachmentFolderPath": "raw/assets",
+  "newFileLocation": "folder",
+  "newFileFolderPath": "concepts",
+  "useMarkdownLinks": false,
+  "newLinkFormat": "shortest",
+  "userIgnoreFilters": [
+    "raw/assets/",
+    "_archive/",
+    "_meta/",
+    ".git/",
+    "node_modules/"
+  ],
+  "showUnsupportedFiles": true,
+  "readableLineLength": false,
+  "strictLineBreaks": false,
+  "showFrontmatter": true,
+  "showLineNumber": false,
+  "rightToLeft": false,
+  "livePreview": true,
+  "foldHeading": true,
+  "foldIndent": true,
+  "tabSize": 2,
+  "propertiesInDocument": "visible"
+}

@@ -1,0 +1,305 @@
+model:
+  default: deepseek-chat
+  provider: deepseek
+  base_url: https://api.deepseek.com/v1
+providers:
+  xiaomi:
+    base_url: https://token-plan-ams.xiaomimimo.com/v1
+    models:
+      mimo-v2.5-pro:
+        context_window: 1048576
+        max_tokens: 131072
+        reasoning: true
+      mimo-v2.5:
+        context_window: 1048576
+        max_tokens: 131072
+        reasoning: true
+        vision: true
+      mimo-v2-pro:
+        context_window: 1048576
+        max_tokens: 131072
+        reasoning: true
+      mimo-v2-omni:
+        context_window: 262144
+        max_tokens: 131072
+        reasoning: true
+        vision: true
+  deepseek:
+    base_url: https://api.deepseek.com/v1
+    models:
+      deepseek-reasoner:
+        context_window: 65536
+        max_tokens: 8192
+        reasoning: true
+      deepseek-chat:
+        context_window: 131072
+        max_tokens: 8192
+        reasoning: false
+      deepseek-v4-pro:
+        context_window: 1048576
+        max_tokens: 32768
+        reasoning: true
+      deepseek-v4-flash:
+        context_window: 1048576
+        max_tokens: 32768
+        reasoning: true
+fallback_providers:
+- deepseek
+fallback_model:
+  provider: deepseek
+  model: deepseek-chat
+toolsets:
+- hermes-cli
+agent:
+  max_turns: 60
+  gateway_timeout: 1200
+  restart_drain_timeout: 60
+  api_max_retries: 3
+  service_tier: ''
+  tool_use_enforcement: auto
+  reasoning_effort: high
+  verbose: false
+terminal:
+  backend: local
+  cwd: .
+  timeout: 180
+  persistent_shell: true
+  lifetime_seconds: 300
+web:
+  backend: firecrawl
+  use_gateway: true
+browser:
+  engine: auto
+  cloud_provider: browser-use
+  use_gateway: true
+checkpoints:
+  enabled: true
+  max_snapshots: 50
+  retention_days: 7
+file_read_max_chars: 100000
+tool_output:
+  max_bytes: 50000
+  max_lines: 2000
+  max_line_length: 2000
+tool_loop_guardrails:
+  warnings_enabled: true
+  hard_stop_enabled: false
+  warn_after:
+    exact_failure: 2
+    same_tool_failure: 3
+    idempotent_no_progress: 2
+  hard_stop_after:
+    exact_failure: 5
+    same_tool_failure: 8
+    idempotent_no_progress: 5
+compression:
+  enabled: true
+  threshold: 0.5
+  target_ratio: 0.2
+  protect_last_n: 20
+prompt_caching:
+  cache_ttl: 5m
+  long_lived_prefix: true
+  long_lived_ttl: 1h
+context:
+  engine: compressor
+delegation:
+  model: deepseek-chat
+  provider: deepseek
+  max_iterations: 75
+  child_timeout_seconds: 600
+  reasoning_effort: high
+  max_concurrent_children: 8
+  max_spawn_depth: 1
+  orchestrator_enabled: true
+  default_toolsets:
+  - terminal
+  - file
+  - web
+memory:
+  memory_enabled: true
+  user_profile_enabled: false
+display:
+  show_reasoning: true
+  streaming: true
+  skin: default
+privacy:
+  redact_pii: false
+security:
+  redact_secrets: true
+  tirith_enabled: true
+  tirith_path: tirith
+  tirith_timeout: 5
+  tirith_fail_open: true
+approvals:
+  mode: manual
+  timeout: 60
+  cron_mode: deny
+cron:
+  wrap_response: true
+  max_parallel_jobs: null
+kanban:
+  dispatch_in_gateway: true
+  dispatch_interval_seconds: 60
+  failure_limit: 2
+smart_model_routing:
+  enabled: true
+  max_simple_chars: 300
+  max_simple_words: 50
+  cheap_model:
+    model: deepseek-chat
+    provider: deepseek
+code_execution:
+  mode: project
+  max_tool_calls: 50
+  timeout: 300
+streaming:
+  enabled: false
+image_gen:
+  use_gateway: true
+auxiliary:
+  vision:
+    provider: custom:perceptron
+    model: isaac-0.2-2b-preview
+    base_url: ''
+    api_key: ''
+    timeout: 30
+    extra_body: {}
+  web_extract:
+    provider: zai
+    model: glm-4.7-flash
+    base_url: ''
+    api_key: ''
+    timeout: 360
+    extra_body: {}
+  compression:
+    provider: zai
+    model: glm-4.7-flash
+    base_url: ''
+    api_key: ''
+    timeout: 120
+    extra_body: {}
+  session_search:
+    provider: auto
+    model: ''
+    base_url: ''
+    api_key: ''
+    timeout: 30
+    extra_body: {}
+    max_concurrency: 3
+  skills_hub:
+    provider: auto
+    model: ''
+    base_url: ''
+    api_key: ''
+    timeout: 30
+    extra_body: {}
+  approval:
+    provider: auto
+    model: ''
+    base_url: ''
+    api_key: ''
+    timeout: 30
+    extra_body: {}
+  mcp:
+    provider: auto
+    model: ''
+    base_url: ''
+    api_key: ''
+    timeout: 30
+    extra_body: {}
+  title_generation:
+    provider: auto
+    model: ''
+    base_url: ''
+    api_key: ''
+    timeout: 30
+    extra_body: {}
+  triage_specifier:
+    provider: auto
+    model: ''
+    base_url: ''
+    api_key: ''
+    timeout: 120
+    extra_body: {}
+  curator:
+    provider: auto
+    model: ''
+    base_url: ''
+    api_key: ''
+    timeout: 600
+    extra_body: {}
+  flush_memories:
+    provider: auto
+    model: ''
+    base_url: ''
+    api_key: ''
+    timeout: 30
+    extra_body: {}
+custom_providers:
+- name: perceptron
+  base_url: https://api.perceptron.inc/v1
+  api_key: ak.QXDT_VtDSNeOaOwu5-hp6Q.R0BLgRqBMbVmrBiI6xpcWePZXRIHypXA5SQ1Yan-wtE
+  models:
+  - isaac-0.2-2b-preview
+  - isaac-0.2-1b
+  - perceptron-mk1
+credential_pool_strategies:
+  openrouter: round_robin
+skills:
+  external_dirs: []
+  template_vars: true
+  inline_shell: false
+  inline_shell_timeout: 10
+  guard_agent_created: false
+  config:
+    wiki:
+      path: ~/wiki
+  creation_nudge_interval: 15
+plugins:
+  enabled:
+  - superpowers
+  disabled: []
+model_catalog:
+  enabled: true
+  url: https://hermes-agent.nousresearch.com/docs/api/model-catalog.json
+  ttl_hours: 24
+  providers: {}
+logging:
+  level: INFO
+  max_size_mb: 5
+  backup_count: 3
+sessions:
+  auto_prune: false
+  retention_days: 90
+  vacuum_after_prune: true
+  min_interval_hours: 24
+session_reset:
+  at_hour: 4
+  idle_minutes: 1440
+  mode: both
+updates:
+  pre_update_backup: false
+  backup_keep: 5
+platform_toolsets:
+  cli:
+  - browser
+  - clarify
+  - code_execution
+  - cronjob
+  - delegation
+  - file
+  - image_gen
+  - memory
+  - moa
+  - session_search
+  - skills
+  - terminal
+  - todo
+  - tts
+  - vision
+  - web
+known_plugin_toolsets:
+  cli:
+  - spotify
+_config_version: 23

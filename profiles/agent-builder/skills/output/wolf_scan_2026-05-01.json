@@ -1,0 +1,46 @@
+{
+  "metadata": {
+    "scan_time": "2026-05-01T08:04:48.821932",
+    "scanner": "full",
+    "reddit_posts": 23,
+    "reddit_time": 95.7,
+    "twitter_status": "unavailable",
+    "twitter_reason": "xurl CLI not installed or not authenticated",
+    "twitter_tweets": 0,
+    "twitter_time": 0.0,
+    "news_articles": 0,
+    "news_time": 0,
+    "news_note": "Skipped in standalone \u2014 runs via web_search in cron",
+    "signals_found": 1
+  },
+  "signals": [
+    {
+      "ticker": "META",
+      "mentions": 3,
+      "sources": "{'reddit'}",
+      "total_sentiment": 0.30000000000000004,
+      "sentiment_count": 3,
+      "reddit_score": 0,
+      "reddit_mentions": 3,
+      "twitter_mentions": 0,
+      "news_mentions": 0,
+      "top_posts": [
+        {
+          "text": "$META Earnings already priced in \u2014 be careful on Calls r/wallstreetbets",
+          "source": "reddit",
+          "subreddit": "wallstreetbets",
+          "score": 0,
+          "url": "https://www.reddit.com/r/wallstreetbets/comments/1kb4qy9/meta_earnings_already_priced_in_be_careful_on/"
+        }
+      ],
+      "reddit_urls": [
+        "https://www.reddit.com/r/wallstreetbets/comments/1kb4qy9/meta_earnings_already_priced_in_be_careful_on/"
+      ],
+      "score": 0.093,
+      "tier": "\u26aa NEUTRAL",
+      "avg_sentiment": 0.1,
+      "velocity": 1,
+      "company_name": "Meta"
+    }
+  ]
+}

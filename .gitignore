@@ -1,0 +1,19 @@
+# Never commit secrets
+.env
+*.env
+*token*
+*secret*
+*credential*
+*.pem
+*.key
+cert.pem
+
+# Never commit runtime state
+__pycache__/
+.venv/
+logs/
+cache/
+audio_cache/
+state-snapshots/
+gateway_state.json
+webhook_subscriptions.json.bak

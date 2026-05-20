@@ -1,0 +1,133 @@
+<!-- HUMANGOOD.AI BLOG POST TEMPLATE — matches premium green/cream design -->
+<!-- Copy this template for each new blog post. Replace {PLACEHOLDERS} -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="{DESCRIPTION}">
+  <meta property="og:title" content="{TITLE}">
+  <meta property="og:description" content="{DESCRIPTION}">
+  <meta property="og:image" content="https://humangood.ai/assets/humangood-hero-wide.png">
+  <meta property="og:url" content="https://humangood.ai/blog/{SLUG}.html">
+  <meta property="og:type" content="article">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="canonical" href="https://humangood.ai/blog/{SLUG}.html">
+  <title>{TITLE} — HumanGood.AI Blog</title>
+  <link rel="stylesheet" href="../styles.css?v={DEPLOY_VERSION}">
+  <!-- Blog-specific styles — extend, don't replace, the site's design system -->
+  <style>
+    .blog-header {
+      padding: 28px clamp(22px, 6vw, 112px) clamp(48px, 6vw, 80px);
+      background: linear-gradient(180deg, var(--white), #f4f0e7);
+    }
+    .article-page {
+      padding: 0 clamp(22px, 6vw, 112px) 80px;
+      max-width: 780px;
+      margin: 0 auto;
+    }
+    .article-page .back-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: var(--muted); text-decoration: none;
+      font-size: 0.9rem; font-weight: 500; margin-bottom: 12px;
+    }
+    .article-page .back-link:hover { color: var(--green); }
+    .article-page .article-meta {
+      font-size: 0.85rem; color: var(--muted); margin-bottom: 8px;
+    }
+    .article-page h1 {
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      color: var(--ink); line-height: 1.25; margin: 0 0 20px;
+    }
+    .article-page .article-subtitle {
+      color: var(--muted); font-size: 1.05rem; line-height: 1.6;
+      margin-bottom: 40px; padding-bottom: 24px;
+      border-bottom: 1px solid var(--line);
+    }
+    .article-body { line-height: 1.8; color: var(--ink); }
+    .article-body h2 { font-size: 1.35rem; margin: 40px 0 16px; color: var(--ink); }
+    .article-body h3 { font-size: 1.1rem; margin: 32px 0 12px; color: var(--ink); }
+    .article-body p { margin-bottom: 1.2rem; }
+    .article-body ul, .article-body ol { margin-bottom: 1.2rem; padding-left: 1.5rem; }
+    .article-body li { margin-bottom: 0.5rem; }
+    .article-body a { color: var(--green); font-weight: 500; }
+    .article-body a:hover { color: var(--green-dark); }
+    .article-body strong { color: var(--ink); }
+    .article-body blockquote {
+      border-left: 3px solid var(--green); padding-left: 1rem;
+      color: var(--muted); margin: 1.5rem 0; font-style: italic;
+    }
+    .article-footer {
+      margin-top: 48px; padding-top: 32px;
+      border-top: 1px solid var(--line); text-align: center;
+    }
+    .article-footer p { color: var(--muted); margin-bottom: 16px; }
+    .article-footer .cta-button {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 28px; background: var(--green); color: var(--white);
+      border-radius: 8px; text-decoration: none; font-weight: 600;
+      transition: background 180ms ease;
+    }
+    .article-footer .cta-button:hover { background: var(--green-dark); }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="blog-header">
+      <!-- COPY the EXACT header from the site's index.html -->
+      <header class="site-header">
+        <a class="brand" href="../" aria-label="{SITE_NAME} home">{SITE_NAME}</a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a href="../#services">Services</a>
+          <a href="../#how-it-works">How it works</a>
+          <a href="../#about">About</a>
+          <a href="../blog/" style="color: var(--green);">Blog</a>
+          <a href="../{PRODUCT_PAGE}">{PRODUCT_NAV_LABEL}</a>
+        </nav>
+        <a class="primary-button header-button" href="../#contact">Book a call</a>
+      </header>
+    </section>
+
+    <article class="article-page">
+      <a class="back-link" href="../blog/">← Back to Blog</a>
+      <p class="article-meta">{DATE}</p>
+      <h1>{TITLE}</h1>
+      <p class="article-subtitle">{DESCRIPTION}</p>
+      <div class="article-body">
+        {BODY_HTML}
+      </div>
+      <div class="article-footer">
+        <p>Enjoyed this article? Book a discovery call to find your first practical AI workflow.</p>
+        <a class="cta-button" href="../#contact">Book a discovery call</a>
+      </div>
+    </article>
+  </main>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": "{TITLE}",
+    "url": "https://humangood.ai/blog/{SLUG}.html",
+    "datePublished": "{DATE_ISO}",
+    "author": {"@type": "Person", "name": "{AUTHOR_NAME}"},
+    "publisher": {
+      "@type": "Organization",
+      "name": "{SITE_NAME}",
+      "url": "https://humangood.ai"
+    }
+  }
+  </script>
+</body>
+</html>
+
+<!-- DESIGN TOKENS USED (from styles.css :root):
+  --white: #fffdf8        (page background)
+  --ink: #121a17           (headings, body text)
+  --muted: #5e6d66         (subtitles, meta, secondary text)
+  --green: #1f6842          (links, buttons, accent)
+  --green-dark: #12482d     (hover states)
+  --line: rgba(29,68,46,0.14) (borders, separators)
+  font: Inter, ui-sans-serif, system-ui
+-->

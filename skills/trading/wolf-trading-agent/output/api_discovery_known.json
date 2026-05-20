@@ -1,0 +1,216 @@
+{
+  "established": [
+    {
+      "name": "GNews API",
+      "url": "https://gnews.io",
+      "endpoint": "https://gnews.io/api/v4/search?q=test&lang=en&max=1&token=__KEY__",
+      "category": "market-data",
+      "tier": "unknown",
+      "status": "unexpected-status",
+      "notes": "HTTP 400 \u2014 unexpected.",
+      "last_tested": "2026-05-17T12:00:54.319016"
+    },
+    {
+      "name": "MarketAux",
+      "url": "https://www.marketaux.com",
+      "endpoint": "https://api.marketaux.com/v1/news/all?symbols=AAPL,TSLA&filter_entities=true&api_token=TEST_ONLY&limit=1",
+      "category": "market-data",
+      "tier": "unknown",
+      "status": "forbidden",
+      "notes": "HTTP 401 \u2014 needs valid API key or subscription.",
+      "last_tested": "2026-05-17T12:00:54.319043"
+    },
+    {
+      "name": "Alpha Vantage",
+      "url": "https://www.alphavantage.co",
+      "endpoint": "https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=IBM&apikey=TEST_ONLY",
+      "category": "market-data",
+      "tier": "unknown",
+      "status": "working",
+      "notes": "Endpoint tested and returned expected data.",
+      "last_tested": "2026-05-17T12:00:54.319046"
+    },
+    {
+      "name": "Finnhub",
+      "url": "https://finnhub.io",
+      "endpoint": "https://finnhub.io/api/v1/quote?symbol=AAPL",
+      "category": "market-data",
+      "tier": "unknown",
+      "status": "forbidden",
+      "notes": "HTTP 401 \u2014 needs valid API key or subscription.",
+      "last_tested": "2026-05-17T12:00:54.319050"
+    },
+    {
+      "name": "Twelve Data",
+      "url": "https://twelvedata.com",
+      "endpoint": "https://api.twelvedata.com/quote?symbol=AAPL&apikey=TEST_ONLY",
+      "category": "market-data",
+      "tier": "unknown",
+      "status": "needs-key",
+      "notes": "Endpoint returned error requesting API key.",
+      "last_tested": "2026-05-17T12:00:54.319053"
+    },
+    {
+      "name": "Twelve Data (RapidAPI)",
+      "url": "https://twelvedata.com",
+      "endpoint": "https://rapidapi.com/twelvedata/api/twelve-data",
+      "category": "market-data",
+      "tier": "unknown",
+      "status": "reachable",
+      "notes": "Endpoint responded with HTTP 200.",
+      "last_tested": "2026-05-17T12:00:54.319056"
+    },
+    {
+      "name": "Polygon.io",
+      "url": "https://polygon.io",
+      "endpoint": "https://api.polygon.io/v2/snapshot/locale/us/markets/stocks/tickers/AAPL?apiKey=TEST_ONLY",
+      "category": "market-data",
+      "tier": "unknown",
+      "status": "forbidden",
+      "notes": "HTTP 401 \u2014 needs valid API key or subscription.",
+      "last_tested": "2026-05-17T12:00:54.319059"
+    },
+    {
+      "name": "MarketStack",
+      "url": "https://marketstack.com",
+      "endpoint": "https://api.marketstack.com/v1/eod?access_key=TEST_ONLY&symbols=AAPL&limit=1",
+      "category": "market-data",
+      "tier": "unknown",
+      "status": "forbidden",
+      "notes": "HTTP 401 \u2014 needs valid API key or subscription.",
+      "last_tested": "2026-05-17T12:00:54.319066"
+    },
+    {
+      "name": "Financial Modeling Prep",
+      "url": "https://financialmodelingprep.com",
+      "endpoint": "https://financialmodelingprep.com/api/v3/profile/AAPL?apikey=TEST_ONLY",
+      "category": "market-data",
+      "tier": "unknown",
+      "status": "forbidden",
+      "notes": "HTTP 401 \u2014 needs valid API key or subscription.",
+      "last_tested": "2026-05-17T12:00:54.319070"
+    },
+    {
+      "name": "EOD Historical Data",
+      "url": "https://eodhd.com",
+      "endpoint": "https://eodhd.com/api/eod/AAPL.US?api_token=TEST_ONLY&fmt=json",
+      "category": "market-data",
+      "tier": "unknown",
+      "status": "forbidden",
+      "notes": "HTTP 401 \u2014 needs valid API key or subscription.",
+      "last_tested": "2026-05-17T12:00:54.319073"
+    },
+    {
+      "name": "Alpaca Markets",
+      "url": "https://alpaca.markets",
+      "endpoint": "https://paper-api.alpaca.markets/v2/account",
+      "category": "market-data",
+      "tier": "unknown",
+      "status": "needs-auth-header",
+      "notes": "Requires API key header auth (not currently configured for automated test).",
+      "last_tested": "2026-05-17T12:00:54.319076"
+    },
+    {
+      "name": "CoinGecko",
+      "url": "https://www.coingecko.com",
+      "endpoint": "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd",
+      "category": "market-data",
+      "tier": "unknown",
+      "status": "working",
+      "notes": "Endpoint tested and returned expected data.",
+      "last_tested": "2026-05-17T12:00:54.319079"
+    },
+    {
+      "name": "OpenFIGI",
+      "url": "https://www.openfigi.com",
+      "endpoint": "https://api.openfigi.com/v3/mapping",
+      "category": "market-data",
+      "tier": "unknown",
+      "status": "unexpected-status",
+      "notes": "HTTP 405 \u2014 unexpected.",
+      "last_tested": "2026-05-17T12:00:54.319082"
+    },
+    {
+      "name": "Tiingo",
+      "url": "https://www.tiingo.com",
+      "endpoint": "https://api.tiingo.com/tiingo/daily/aapl/prices?token=TEST_ONLY",
+      "category": "market-data",
+      "tier": "unknown",
+      "status": "forbidden",
+      "notes": "HTTP 403 \u2014 needs valid API key or subscription.",
+      "last_tested": "2026-05-17T12:00:54.319088"
+    },
+    {
+      "name": "Intrinio",
+      "url": "https://intrinio.com",
+      "endpoint": "https://api-v2.intrinio.com/securities/AAPL/prices?api_key=TEST_ONLY",
+      "category": "market-data",
+      "tier": "unknown",
+      "status": "forbidden",
+      "notes": "HTTP 401 \u2014 needs valid API key or subscription.",
+      "last_tested": "2026-05-17T12:00:54.319091"
+    },
+    {
+      "name": "Yahoo Finance (unofficial)",
+      "url": "https://finance.yahoo.com",
+      "endpoint": "https://query1.finance.yahoo.com/v8/finance/chart/AAPL?range=1d&interval=1d",
+      "category": "market-data",
+      "tier": "unknown",
+      "status": "rate-limited",
+      "notes": "HTTP 429 \u2014 hit rate limit. Check back later.",
+      "last_tested": "2026-05-17T12:00:54.319094"
+    },
+    {
+      "name": "World Trading Data",
+      "url": "https://www.worldtradingdata.com",
+      "endpoint": "https://api.worldtradingdata.com/api/v1/stock?symbol=AAPL&api_token=TEST_ONLY",
+      "category": "market-data",
+      "tier": "unknown",
+      "status": "unexpected-format",
+      "notes": "HTTP 200 but response format unexpected (expected 'data' not found).",
+      "last_tested": "2026-05-17T12:00:54.319104"
+    },
+    {
+      "name": "Stock Data",
+      "url": "https://www.stockdata.org",
+      "endpoint": "https://api.stockdata.org/v1/data/quote?symbols=AAPL&api_token=TEST_ONLY",
+      "category": "market-data",
+      "tier": "unknown",
+      "status": "forbidden",
+      "notes": "HTTP 401 \u2014 needs valid API key or subscription.",
+      "last_tested": "2026-05-17T12:00:54.319107"
+    },
+    {
+      "name": "Yahoo Finance (RapidAPI)",
+      "url": "https://rapidapi.com/apidojo/api/yh-finance",
+      "endpoint": "https://yh-finance.p.rapidapi.com/stock/v2/get-summary?symbol=AAPL",
+      "category": "market-data",
+      "tier": "unknown",
+      "status": "forbidden",
+      "notes": "HTTP 403 \u2014 needs valid API key or subscription.",
+      "last_tested": "2026-05-17T12:00:54.319109"
+    },
+    {
+      "name": "EOD Historical Data (RapidAPI)",
+      "url": "https://rapidapi.com/eodhistoricaldata/api/eod-historical-data",
+      "endpoint": "https://eodhistoricaldata.com/api/real-time/AAPL.US?api_token=TEST_ONLY&fmt=json",
+      "category": "market-data",
+      "tier": "unknown",
+      "status": "forbidden",
+      "notes": "HTTP 401 \u2014 needs valid API key or subscription.",
+      "last_tested": "2026-05-17T12:00:54.319111"
+    }
+  ],
+  "deprecated": [
+    {
+      "name": "IEX Cloud",
+      "url": "https://iexcloud.io",
+      "endpoint": "https://cloud.iexapis.com/stable/stock/aapl/quote?token=TEST_ONLY",
+      "category": "market-data",
+      "tier": "unknown",
+      "status": "dead",
+      "notes": "Endpoint unreachable: <urlopen error timed out>",
+      "last_tested": "2026-05-17T12:00:54.319085"
+    }
+  ]
+}

@@ -1,0 +1,74 @@
+<!-- HUMANGOOD.AI BLOG INDEX TEMPLATE — matches premium green/cream design -->
+<!-- Replace {PLACEHOLDERS}. Duplicate the <article> block for each post -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Practical guides, strategies, and insights on {BLOG_TOPIC}. {SITE_TAGLINE}">
+  <meta property="og:title" content="Blog — {SITE_NAME} | {SITE_TAGLINE}">
+  <meta property="og:description" content="Practical guides, strategies, and insights on {BLOG_TOPIC}.">
+  <meta property="og:image" content="https://{DOMAIN}/assets/{HERO_IMAGE}">
+  <meta property="og:url" content="https://{DOMAIN}/blog/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="canonical" href="https://{DOMAIN}/blog/">
+  <title>Blog — {SITE_NAME} | {SITE_TAGLINE}</title>
+  <link rel="stylesheet" href="../styles.css?v={DEPLOY_VERSION}">
+  <style>
+    .blog-header {
+      padding: 28px clamp(22px, 6vw, 112px) clamp(48px, 6vw, 80px);
+      background: linear-gradient(180deg, var(--white), #f4f0e7);
+    }
+    .blog-header h1 { margin-top: 48px; font-size: clamp(1.8rem, 3.2vw, 2.6rem); color: var(--ink); line-height: 1.2; }
+    .blog-header p { color: var(--muted); font-size: clamp(1rem, 1.3vw, 1.15rem); max-width: 640px; line-height: 1.7; }
+    .blog-grid { padding: 60px clamp(22px, 6vw, 112px) 80px; display: grid; gap: 32px; max-width: 860px; }
+    .blog-card { background: var(--white); border: 1px solid var(--line); border-radius: 16px; padding: 32px; transition: box-shadow 200ms ease, border-color 200ms ease; }
+    .blog-card:hover { box-shadow: var(--shadow); border-color: var(--green); }
+    .blog-card .date { font-size: 0.8rem; color: var(--muted); margin: 0 0 8px; text-transform: uppercase; letter-spacing: 0.03em; }
+    .blog-card h2 { margin: 0 0 12px; font-size: 1.35rem; line-height: 1.35; }
+    .blog-card h2 a { color: var(--ink); text-decoration: none; }
+    .blog-card h2 a:hover { color: var(--green); }
+    .blog-card p { color: var(--muted); font-size: 0.95rem; line-height: 1.6; margin: 0 0 16px; }
+    .blog-card .read-more { font-size: 0.9rem; font-weight: 600; color: var(--green); text-decoration: none; }
+    .blog-card .read-more:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="blog-header">
+      <header class="site-header">
+        <a class="brand" href="../" aria-label="{SITE_NAME} home">{SITE_NAME}</a>
+        <nav class="site-nav" aria-label="Primary navigation">
+          <a href="../#services">Services</a>
+          <a href="../#how-it-works">How it works</a>
+          <a href="../#about">About</a>
+          <a href="../blog/" style="color: var(--green);">Blog</a>
+          <a href="../{PRODUCT_PAGE}">{PRODUCT_NAV_LABEL}</a>
+        </nav>
+        <a class="primary-button header-button" href="../#contact">Book a call</a>
+      </header>
+      <h1>{BLOG_HEADING}</h1>
+      <p>{BLOG_DESCRIPTION}</p>
+    </section>
+
+    <section class="blog-grid" aria-label="Blog posts">
+      <article class="blog-card">
+        <p class="date">{POST_DATE}</p>
+        <h2><a href="{POST_SLUG}.html">{POST_TITLE}</a></h2>
+        <p>{POST_DESCRIPTION}</p>
+        <a class="read-more" href="{POST_SLUG}.html">Read more →</a>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const revealEls = document.querySelectorAll('.blog-card');
+    if ('IntersectionObserver' in window) {
+      const observer = new IntersectionObserver((entries) => { entries.forEach(entry => { if (entry.isIntersecting) { entry.target.style.opacity = '1'; entry.target.style.transform = 'translateY(0)'; observer.unobserve(entry.target); } }); }, { threshold: 0.15 });
+      revealEls.forEach(el => { el.style.opacity = '0'; el.style.transform = 'translateY(20px)'; el.style.transition = 'opacity 500ms ease, transform 500ms ease'; observer.observe(el); });
+    }
+  </script>
+</body>
+</html>

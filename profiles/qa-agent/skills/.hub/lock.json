@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "installed": {
+    "duckduckgo-search": {
+      "source": "official",
+      "identifier": "official/research/duckduckgo-search",
+      "trust_level": "builtin",
+      "scan_verdict": "caution",
+      "content_hash": "sha256:593bc4256aa4718d",
+      "install_path": "research/duckduckgo-search",
+      "files": [
+        "SKILL.md",
+        "scripts/duckduckgo.sh"
+      ],
+      "metadata": {},
+      "installed_at": "2026-04-22T08:42:24.009884+00:00",
+      "updated_at": "2026-04-22T08:42:24.009896+00:00"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "linear": {
+    "description": "Linear issue/create/update events trigger agent actions",
+    "events": [],
+    "secret": "JCNU-ouTnYOGJCzU-f2XtJJTNXg_M7LQBcts4LBgNUQ",
+    "prompt": "Linear event received.\\n\\nAction: {action}\\nType: {type}\\n\\nIssue: {data.identifier} — {data.title}\\nURL: {url}\\n\\nActor: {actor.name}\\n\\nPlease process this event accordingly.",
+    "skills": [],
+    "deliver": "telegram",
+    "created_at": "2026-05-20T08:31:29Z"
+  }
+}

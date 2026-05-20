@@ -1,0 +1,171 @@
+# 🔍 API Discovery Scan — 2026-05-15
+
+Scan time: 2026-05-15T12:01:02.824920
+
+## 📊 Summary
+
+**Tested:** 21 endpoints
+
+**✅ Working:** 5
+  - GNews API
+  - Alpha Vantage
+  - Twelve Data (RapidAPI)
+  - CoinGecko
+  - Yahoo Finance (unofficial)
+
+**🔒 Needs Key/Auth:** 12
+  - Finnhub
+  - Twelve Data
+  - Polygon.io
+  - MarketStack
+  - Financial Modeling Prep
+  - EOD Historical Data
+  - Alpaca Markets
+  - Tiingo
+  - Intrinio
+  - Stock Data
+  - Yahoo Finance (RapidAPI)
+  - EOD Historical Data (RapidAPI)
+
+**❌ Dead/Not Found:** 2
+  - MarketAux
+  - IEX Cloud
+
+**🤔 Other:** 2
+  - OpenFIGI
+  - World Trading Data
+
+## 🔬 Detailed Endpoint Tests
+
+  ✅ **GNews API** — working
+     Endpoint: `https://gnews.io/api/v4/search?q=test&lang=en&max=1&token=__KEY__`
+     Status: working (HTTP 200)
+     Notes: Endpoint tested and returned expected data.
+
+  ❌ **MarketAux** — dead
+     Endpoint: `https://api.marketaux.com/v1/news/all?symbols=AAPL,TSLA&filter_entities=true&api`
+     Status: dead (HTTP 0)
+     Notes: Endpoint unreachable: The read operation timed out
+
+  ✅ **Alpha Vantage** — working
+     Endpoint: `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=IBM&apikey=TEST_O`
+     Status: working (HTTP 200)
+     Notes: Endpoint tested and returned expected data.
+
+  🔒 **Finnhub** — forbidden
+     Endpoint: `https://finnhub.io/api/v1/quote?symbol=AAPL`
+     Status: forbidden (HTTP 401)
+     Notes: HTTP 401 — needs valid API key or subscription.
+
+  ⚠️ **Twelve Data** — needs-key
+     Endpoint: `https://api.twelvedata.com/quote?symbol=AAPL&apikey=TEST_ONLY`
+     Status: needs-key (HTTP 200)
+     Notes: Endpoint returned error requesting API key.
+
+  ✅ **Twelve Data (RapidAPI)** — reachable
+     Endpoint: `https://rapidapi.com/twelvedata/api/twelve-data`
+     Status: reachable (HTTP 200)
+     Notes: Endpoint responded with HTTP 200.
+
+  🔒 **Polygon.io** — forbidden
+     Endpoint: `https://api.polygon.io/v2/snapshot/locale/us/markets/stocks/tickers/AAPL?apiKey=`
+     Status: forbidden (HTTP 401)
+     Notes: HTTP 401 — needs valid API key or subscription.
+
+  🔒 **MarketStack** — forbidden
+     Endpoint: `https://api.marketstack.com/v1/eod?access_key=TEST_ONLY&symbols=AAPL&limit=1`
+     Status: forbidden (HTTP 401)
+     Notes: HTTP 401 — needs valid API key or subscription.
+
+  🔒 **Financial Modeling Prep** — forbidden
+     Endpoint: `https://financialmodelingprep.com/api/v3/profile/AAPL?apikey=TEST_ONLY`
+     Status: forbidden (HTTP 401)
+     Notes: HTTP 401 — needs valid API key or subscription.
+
+  🔒 **EOD Historical Data** — forbidden
+     Endpoint: `https://eodhd.com/api/eod/AAPL.US?api_token=TEST_ONLY&fmt=json`
+     Status: forbidden (HTTP 401)
+     Notes: HTTP 401 — needs valid API key or subscription.
+
+  ⏭️ **Alpaca Markets** — needs-auth-header
+     Endpoint: `https://paper-api.alpaca.markets/v2/account`
+     Status: needs-auth-header (HTTP 0)
+     Notes: Requires API key header auth (not currently configured for automated test).
+
+  ✅ **CoinGecko** — working
+     Endpoint: `https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd`
+     Status: working (HTTP 200)
+     Notes: Endpoint tested and returned expected data.
+
+  ⚠️ **OpenFIGI** — unexpected-status
+     Endpoint: `https://api.openfigi.com/v3/mapping`
+     Status: unexpected-status (HTTP 405)
+     Notes: HTTP 405 — unexpected.
+
+  ❌ **IEX Cloud** — dead
+     Endpoint: `https://cloud.iexapis.com/stable/stock/aapl/quote?token=TEST_ONLY`
+     Status: dead (HTTP 0)
+     Notes: Endpoint unreachable: <urlopen error timed out>
+
+  🔒 **Tiingo** — forbidden
+     Endpoint: `https://api.tiingo.com/tiingo/daily/aapl/prices?token=TEST_ONLY`
+     Status: forbidden (HTTP 403)
+     Notes: HTTP 403 — needs valid API key or subscription.
+
+  🔒 **Intrinio** — forbidden
+     Endpoint: `https://api-v2.intrinio.com/securities/AAPL/prices?api_key=TEST_ONLY`
+     Status: forbidden (HTTP 401)
+     Notes: HTTP 401 — needs valid API key or subscription.
+
+  ✅ **Yahoo Finance (unofficial)** — working
+     Endpoint: `https://query1.finance.yahoo.com/v8/finance/chart/AAPL?range=1d&interval=1d`
+     Status: working (HTTP 200)
+     Notes: Endpoint tested and returned expected data.
+
+  🤔 **World Trading Data** — unexpected-format
+     Endpoint: `https://api.worldtradingdata.com/api/v1/stock?symbol=AAPL&api_token=TEST_ONLY`
+     Status: unexpected-format (HTTP 200)
+     Notes: HTTP 200 but response format unexpected (expected 'data' not found).
+
+  🔒 **Stock Data** — forbidden
+     Endpoint: `https://api.stockdata.org/v1/data/quote?symbols=AAPL&api_token=TEST_ONLY`
+     Status: forbidden (HTTP 401)
+     Notes: HTTP 401 — needs valid API key or subscription.
+
+  🔒 **Yahoo Finance (RapidAPI)** — forbidden
+     Endpoint: `https://yh-finance.p.rapidapi.com/stock/v2/get-summary?symbol=AAPL`
+     Status: forbidden (HTTP 403)
+     Notes: HTTP 403 — needs valid API key or subscription.
+
+  🔒 **EOD Historical Data (RapidAPI)** — forbidden
+     Endpoint: `https://eodhistoricaldata.com/api/real-time/AAPL.US?api_token=TEST_ONLY&fmt=json`
+     Status: forbidden (HTTP 401)
+     Notes: HTTP 401 — needs valid API key or subscription.
+
+## 🧹 Recommendations for Wolf
+
+Sources checked: endpoint-tests-only
+
+**APIs worth integrating right now (tested working):**
+  - GNews API
+  - Alpha Vantage
+  - Twelve Data (RapidAPI)
+  - CoinGecko
+  - Yahoo Finance (unofficial)
+
+**Could work with a free API key (register → test → integrate):**
+  - Finnhub
+  - Twelve Data
+  - Polygon.io
+  - MarketStack
+  - Financial Modeling Prep
+  - EOD Historical Data
+  - Alpaca Markets
+  - Tiingo
+  - Intrinio
+  - Stock Data
+  - Yahoo Finance (RapidAPI)
+  - EOD Historical Data (RapidAPI)
+
+---
+_Generated by Sherlock API Discovery Scanner — endpoint tests are REAL_

@@ -1,0 +1,17 @@
+{
+  "renderNullAs": "-",
+  "taskCompletionTracking": true,
+  "taskCompletionText": "completion",
+  "recursiveSubTaskCompletion": true,
+  "warnOnEmptyResult": true,
+  "refreshEnabled": true,
+  "refreshInterval": 2500,
+  "allowHtml": true,
+  "allowJavascript": false,
+  "inlineQueryPrefix": "=",
+  "inlineJsQueryPrefix": "$=",
+  "tableGroupColumnName": "Group",
+  "tableLinkColName": "File",
+  "tableIdColumnName": "File",
+  "showResultCount": true
+}

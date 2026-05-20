@@ -1,0 +1,9 @@
+{
+  "last_report_path": "/home/ubuntu/.hermes/logs/curator/20260515-091647",
+  "last_run_at": "2026-05-15T09:16:47.652808+00:00",
+  "last_run_duration_seconds": 104.080629,
+  "last_run_summary": "auto: no changes; llm: ## Analysis Complete: No Clusters Found\n\nI've read all 6 agent-created skills in full. Here's the breakdown:\n\n### Inventory by Domain\n\n| Skill | Domain | Type | Assessment |\n|-------|--------|------|------------|\n| `hermes-office-setup` | d…",
+  "last_run_summary_shown_at": "2026-05-15T09:16:47.652808+00:00",
+  "paused": false,
+  "run_count": 4
+}
