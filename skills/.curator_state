@@ -1,9 +1,9 @@
 {
-  "last_report_path": "/home/ubuntu/.hermes/logs/curator/20260515-091647",
-  "last_run_at": "2026-05-15T09:16:47.652808+00:00",
-  "last_run_duration_seconds": 104.080629,
-  "last_run_summary": "auto: no changes; llm: ## Analysis Complete: No Clusters Found\n\nI've read all 6 agent-created skills in full. Here's the breakdown:\n\n### Inventory by Domain\n\n| Skill | Domain | Type | Assessment |\n|-------|--------|------|------------|\n| `hermes-office-setup` | d…",
-  "last_run_summary_shown_at": "2026-05-15T09:16:47.652808+00:00",
+  "last_report_path": "/home/ubuntu/.hermes/logs/curator/20260522-092634",
+  "last_run_at": "2026-05-22T09:26:34.837946+00:00",
+  "last_run_duration_seconds": 202.589837,
+  "last_run_summary": "auto: no changes; llm: All 3 archives are in place. The remaining 6 agent-created skills are each already class-level for their domain — no further consolidation targets.\n\n## Consolidation Summary\n\n### What was done\n\n**Cluster 1: Trading/Quant** (2 → 1)\n- Created…\narchived 3 skill(s):\n  • commodity-market-intelligence — pruned (stale)\n  • quant-nn-scanner — pruned (stale)\n  • vps-service-management — pruned (stale)\nfull report: hermes curator status",
+  "last_run_summary_shown_at": "2026-05-22T09:26:34.837946+00:00",
   "paused": false,
-  "run_count": 4
+  "run_count": 5
 }

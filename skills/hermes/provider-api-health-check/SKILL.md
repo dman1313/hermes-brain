@@ -107,8 +107,55 @@ OpenRouter returns 353+ models from /models, but OpenAI gpt-5.x models (gpt-5.5,
 | Anthropic | 15s |
 | Kimi | 10s |
 
-### 4. Xiaomi Token Plan Recovery
-The `token-plan-ams.xiaomimimo.com/v1` endpoint previously returned 502 errors but recovered. Retest periodically for recovered endpoints.
+### 4. Xiaomi Token Plan Recovery and Credential Management
+
+The Xiaomi token plan (`token-plan-ams.xiaomimimo.com/v1`) requires TWO pieces to work:
+
+1. **A Xiaomi token plan key** (`tp-...` format) — set as `XIAOMI_API_KEY` in `.env`
+2. **An Anthropic API key configured on the Xiaomi portal** — without this, even a fresh valid token returns 401 "Invalid API Key"
+
+**Diagnosing 401 on Xiaomi:** A 401 does NOT necessarily mean the token is invalid/expired. It often means the upstream Anthropic key hasn't been configured on the Xiaomi portal. The token itself may be fine — the portal just can't route to Anthropic without it.
+
+**Credential update workflow (when user provides a new token):**
+
+Step 1 — Update `.env`:
+```bash
+sed -i 's/^XIAOMI_API_KEY=.*/XIAOMI_API_KEY=<new-token>/' ~/.hermes/.env
+```
+
+Step 2 — Update `auth.json` credential pool entries (both `xiaomi` and `custom:xiaomi` pools):
+```python
+import json, time
+with open('/home/ubuntu/.hermes/auth.json') as f:
+    auth = json.load(f)
+for pool_name in ['xiaomi', 'custom:xiaomi']:
+    for entry in auth['credential_pool'].get(pool_name, []):
+        entry['access_token'] = '<new-token>'
+        entry['last_status'] = None   # clear exhausted/401
+        entry['exhausted'] = None
+        entry['last_status_at'] = time.time()
+with open('/home/ubuntu/.hermes/auth.json', 'w') as f:
+    json.dump(auth, f, indent=2)
+```
+
+Step 3 — Verify with raw curl (prefer curl over `hermes -z` for key validation — `hermes -z` may produce empty output even on success):
+```bash
+curl -s --max-time 15 "https://token-plan-ams.xiaomimimo.com/v1/chat/completions" \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{"model":"mimo-v2.5-pro","messages":[{"role":"user","content":"hi"}],"max_tokens":10}'
+```
+
+**Related env vars** (in `~/.hermes/.env`):
+- `XIAOMI_API_KEY` — the token plan key
+- `XIAOMI_BASE_URL=https://token-plan-ams.xiaomimimo.com/v1` — API endpoint
+- `XIAOMI_ANTHROPIC_BASE_URL=https://token-plan-ams.xiaomimimo.com/anthropic` — Anthropic key config portal (may 404 without auth; use browser with token to access)
+
+**Portal recovery:** If the token is valid but 401 persists, the Anthropic upstream key needs to be configured. The user must visit the Xiaomi token plan management dashboard in a browser (authenticated with their token) and add/update their Anthropic API key. The exact portal URL may differ from the API base URL.
+
+**The `hermes status` output does NOT list Xiaomi** in the API Keys section even when configured — Xiaomi appears only as the active provider line. Do not rely on `hermes status` to confirm Xiaomi key presence; check `.env` and `auth.json` directly.
+
+See `references/xiaomi-token-plan-recovery.md` for a session-specific recovery transcript.
 
 ### 5. OpenRouter 402 Does Not Mean Dead Provider
 OpenRouter returns HTTP 402 "This request requires more credits" when the remaining balance is insufficient for the requested `max_tokens`. The provider is alive — the request just needs a smaller `max_tokens` (try 10 for health checks). The system's remaining balance and monthly limit are available via `GET /api/v1/auth/key`. Do NOT mark OpenRouter as failed based on 402 alone.

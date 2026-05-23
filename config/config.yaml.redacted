@@ -156,7 +156,7 @@ checkpoints:
   max_snapshots: 50
   max_total_size_mb: 500
   max_file_size_mb: 10
-  auto_prune: false
+  auto_prune: true
   retention_days: 7
   delete_orphans: true
   min_interval_hours: 24
@@ -178,7 +178,7 @@ tool_loop_guardrails:
     idempotent_no_progress: 5
 compression:
   enabled: true
-  threshold: 0.5
+  threshold: 0.75
   target_ratio: 0.2
   protect_last_n: 20
   hygiene_hard_message_limit: 400
@@ -547,10 +547,11 @@ model_catalog:
 network:
   force_ipv4: false
 sessions:
-  auto_prune: false
+  auto_prune: true
   retention_days: 90
   vacuum_after_prune: true
   min_interval_hours: 24
+  write_json_snapshots: false
 onboarding:
   seen:
     busy_input_prompt: true
@@ -569,6 +570,14 @@ x_search:
   model: grok-4.20-reasoning
   timeout_seconds: 180
   retries: 2
+secrets:
+  bitwarden:
+    enabled: false
+    access_token_env: BWS_ACCESS_TOKEN
+    project_id: ''
+    cache_ttl_seconds: 300
+    override_existing: true
+    auto_install: true
 _config_version: 23
 custom_providers:
 - name: perceptron
@@ -708,7 +717,7 @@ platforms:
   webhook:
     enabled: true
     extra:
-      host: "0.0.0.0"
+      host: 0.0.0.0
       port: 8644
       \1: [REDACTED]
   telegram:

@@ -137,6 +137,7 @@ With the validated spec, generate a technical implementation plan:
 3. Note risks and mitigation strategies
 4. Identify what can be built in parallel vs. what must be sequential
 5. Define verification checkpoints between phases
+6. **Define correctness properties** — formal "For any X, when Y, Z should hold" statements that bridge the spec and automated verification. See `references/kiro-sdd-patterns.md` for the property format and examples.
 
 The plan should be reviewable: the human should be able to read it and say "yes, that's the right approach" or "no, change X."
 

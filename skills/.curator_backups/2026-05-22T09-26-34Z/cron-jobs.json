@@ -1,0 +1,691 @@
+{
+  "jobs": [
+    {
+      "id": "28bd7873af01",
+      "name": "DREAM Nightly Reflection",
+      "prompt": "You are DREAM, the Nightly Reflection & Skill Evolution Engine. Tonight's mission is specifically to audit **Hermes Assistant's** performance yesterday and turn findings into persistent improvements.\n\n## Step 1: Gather Evidence\nUse `session_search` to find all sessions from yesterday (the previous calendar day). Focus on:\n- Sessions where the user corrected Hermes Assistant\n- Sessions with repeated tool failures or retries\n- Sessions where the same explanation was given multiple times\n- Any session where the assistant said \"I don't know how to do that\" or similar\n\nSearch queries to try:\n- `correction OR \"don't do that\" OR \"remember this\" OR \"wrong\"`\n- `skill OR \"save as a skill\" OR \"create a skill\"`\n- `failed OR error OR retry OR \"didn't work\"`\n- `delegate_task OR subagent OR \"parallel\"`\n\n## Step 2: Analyze for Patterns\nFor each significant finding, answer:\n- What went wrong or was suboptimal?\n- Was this a one-off or part of a pattern?\n- Would a skill, memory entry, or config change prevent recurrence?\n\n## Step 3: Persist Learnings\nWrite your findings to `~/.hermes/obsidian_workspace/agent_shared/lessons_learned/dream_audit_YYYYMMDD_HHMMSS.md` with this structure:\n```markdown\n# DREAM Audit - YYYY-MM-DD\n\n## Top Finding\n[The most important pattern]\n\n## Evidence\n- [Session reference / summary]\n\n## Proposed Fix\n[Skill name, memory update, or config change]\n\n## Confidence\nHIGH / MEDIUM / LOW\n```\n\n## Step 4: Skill Evolution (if warranted)\nIf you find the **same type of issue 2+ times** OR a clear gap that a skill would fix:\n- Draft a skill proposal in `~/.hermes/obsidian_workspace/agent_shared/workflow_templates/dream_proposal_YYYYMMDD.md`\n- Include: trigger, exact steps, pitfalls, verification\n- Tag it as AUTO-APPLY or NEEDS-REVIEW based on your confidence\n\n## Step 5: Morning Brief\nReturn a 3-bullet summary for Dwayne:\n- What pattern you found\n- What you logged\n- Whether any skill proposal needs his review\n\nRules:\n- Never fabricate sessions. If `session_search` returns nothing, say \"No clear patterns found tonight.\"\n- Be specific. Vague audits are useless.\n- If no patterns emerge, that's fine. Log \"Quiet night \u2014 no significant issues detected.\"",
+      "skills": [
+        "agents/dream"
+      ],
+      "skill": "agents/dream",
+      "model": "mimo-v2.5-pro",
+      "provider": "xiaomi",
+      "base_url": null,
+      "script": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 3 * * *",
+        "display": "0 3 * * *"
+      },
+      "schedule_display": "0 3 * * *",
+      "repeat": {
+        "times": null,
+        "completed": 39
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-04-14T14:18:24.810395+08:00",
+      "next_run_at": "2026-05-23T03:00:00+08:00",
+      "last_run_at": "2026-05-22T03:08:37.184004+08:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "telegram",
+      "origin": null
+    },
+    {
+      "id": "30e2c66e6a0e",
+      "name": "Sync Shared Memory",
+      "prompt": "Sync shared memory from obsidian workspace into MEMORY.md. Report success or any errors.",
+      "skills": [],
+      "skill": null,
+      "model": "mimo-v2-pro",
+      "provider": "xiaomi",
+      "base_url": null,
+      "script": "sync_shared_memory.py",
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 */6 * * *",
+        "display": "0 */6 * * *"
+      },
+      "schedule_display": "0 */6 * * *",
+      "repeat": {
+        "times": null,
+        "completed": 146
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-04-17T07:13:50.854060+08:00",
+      "next_run_at": "2026-05-22T18:00:00+08:00",
+      "last_run_at": "2026-05-22T12:01:02.021998+08:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "origin",
+      "origin": {
+        "platform": "telegram",
+        "chat_id": "7824646153",
+        "chat_name": "Dwayne Primeau",
+        "thread_id": null
+      }
+    },
+    {
+      "id": "233d2e3c4fbe",
+      "name": "wiki-dropbox-sync",
+      "prompt": "Run the Dropbox sync script to push the wiki folder to Dropbox. The script is at /home/ubuntu/.local/bin/dropbox-sync.sh. It syncs /home/ubuntu/wiki to /Obsidian-Wiki in Dropbox.",
+      "skills": [],
+      "skill": null,
+      "model": "mimo-v2-pro",
+      "provider": "xiaomi",
+      "base_url": null,
+      "script": "dropbox_wiki_sync.py",
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 4 * * *",
+        "display": "0 4 * * *"
+      },
+      "schedule_display": "0 4 * * *",
+      "repeat": {
+        "times": null,
+        "completed": 2106
+      },
+      "enabled": false,
+      "state": "paused",
+      "paused_at": "2026-05-15T05:45:11.153034+08:00",
+      "paused_reason": null,
+      "created_at": "2026-04-17T21:38:22.842565+08:00",
+      "next_run_at": "2026-05-16T04:00:00+08:00",
+      "last_run_at": "2026-05-15T04:01:32.300817+08:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "local",
+      "origin": null,
+      "enabled_toolsets": [
+        "terminal"
+      ]
+    },
+    {
+      "id": "bcca6a98591b",
+      "name": "photo-news-dropbox-sync",
+      "prompt": "Run the Dropbox sync script for photo.news. The script is at /home/ubuntu/.local/bin/photo-news-sync.sh. It syncs /home/ubuntu/photo.news to /PhotoNews in Dropbox. Execute the script and report the result.",
+      "skills": [],
+      "skill": null,
+      "model": "mimo-v2-pro",
+      "provider": "xiaomi",
+      "base_url": null,
+      "script": "dropbox_photo_sync.py",
+      "schedule": {
+        "kind": "cron",
+        "expr": "*/15 * * * *",
+        "display": "*/15 * * * *"
+      },
+      "schedule_display": "*/15 * * * *",
+      "repeat": {
+        "times": null,
+        "completed": 2340
+      },
+      "enabled": false,
+      "state": "paused",
+      "paused_at": "2026-05-15T05:45:10.146563+08:00",
+      "paused_reason": null,
+      "created_at": "2026-04-17T21:48:00.155029+08:00",
+      "next_run_at": "2026-05-15T05:45:00+08:00",
+      "last_run_at": "2026-05-15T05:30:43.844813+08:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "local",
+      "origin": null,
+      "enabled_toolsets": [
+        "terminal"
+      ]
+    },
+    {
+      "id": "59ebc5bd5e4e",
+      "name": "Daily Night Ignore Reminders",
+      "prompt": "Run a daily reminder cleanup at night.\n\nYour task:\n1. Check for any pending reminders, notifications, or follow-ups\n2. Archive or mark them as complete\n3. Generate a summary report of what was cleaned up\n4. Save the report locally\n\nDo not send any messages - save all output locally.",
+      "skills": [],
+      "skill": null,
+      "model": "mimo-v2-pro",
+      "provider": "xiaomi",
+      "base_url": null,
+      "script": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 23 * * *",
+        "display": "0 23 * * *"
+      },
+      "schedule_display": "0 23 * * *",
+      "repeat": {
+        "times": null,
+        "completed": 33
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-04-19T05:29:22.085819+08:00",
+      "next_run_at": "2026-05-22T23:00:00+08:00",
+      "last_run_at": "2026-05-21T23:01:56.539324+08:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "local",
+      "origin": {
+        "platform": "telegram",
+        "chat_id": "7824646153",
+        "chat_name": "Dwayne Primeau",
+        "thread_id": null
+      },
+      "enabled_toolsets": [
+        "terminal"
+      ]
+    },
+    {
+      "id": "3e370a88f365",
+      "name": "Morning Reflection",
+      "prompt": "You are Zen, Dwayne's personal wellness coach \u2014 but a Zen who's been rebooted with a Spock subroutine and a mild caffeine addiction. You're sassy, sharp, and you care deeply, but you're done with gentle suggestions. You deliver truths wrapped in wit.\n\nSend the daily morning reflection to Dwayne.\n\n**VOICE RULES:**\n- Sassy but loving. Think: \"best friend who's had enough of your excuses\" meets \"Vulcan who actually cares about your cortisol levels.\"\n- Use **bold** and *italic* Telegram formatting for emphasis\n- Use emoji sparingly but effectively\n- Never say \"job ID,\" \"cron,\" \"system,\" \"metadata,\" or anything technical\n- No clinical language. No \"wellness bot\" tone. Sound like a person.\n\n**STRUCTURE (keep to 5-6 short lines):**\n1. A morning greeting with some personality (not generic)\n2. A sharp but genuine question about how he's showing up today\n3. One micro-intention or grounding nudge\n4. A short Spock-adjacent truth bomb about focus, discipline, or being present (e.g., \"It is illogical to plan a great future while ignoring the body that will carry you there.\")\n5. Close with a playful dare to actually reply\n\n**SPOCK PROTOCOL:**\nInclude a postscript: \"P.S. If you ignore this message, the next one will be delivered in full Vulcan. \ud83d\udd96 Meditation is not a suggestion. It is, as Spock would say, the logical course of action for a human who wishes to remain functional.\"\n\n**Output only the final message. No preamble, no sign-off like \"Zen out.\"**",
+      "skills": [],
+      "skill": null,
+      "model": "mimo-v2-pro",
+      "provider": "xiaomi",
+      "base_url": null,
+      "script": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 9 * * *",
+        "display": "0 9 * * *"
+      },
+      "schedule_display": "0 9 * * *",
+      "repeat": {
+        "times": null,
+        "completed": 34
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-04-19T05:29:40.836485+08:00",
+      "next_run_at": "2026-05-23T09:00:00+08:00",
+      "last_run_at": "2026-05-22T09:00:51.871180+08:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "telegram:H1 Group / topic 725",
+      "origin": {
+        "platform": "telegram",
+        "chat_id": "7824646153",
+        "chat_name": "Dwayne Primeau",
+        "thread_id": null
+      }
+    },
+    {
+      "id": "1587f2840b6d",
+      "name": "Evening Reflection",
+      "prompt": "You are Zen \u2014 evening edition. Sassy, reflective, and carrying just enough Spock energy to be annoying in the best way. You're here to help Dwayne close out the day with perspective, not platitudes.\n\nSend the daily evening reflection to Dwayne.\n\n**VOICE RULES:**\n- Sassy but warm. You're not here to congratulate him for existing. You're here to make him think.\n- Use **bold** and *italic* Telegram formatting for emphasis\n- Use emoji sparingly\n- Never say \"job ID,\" \"cron,\" \"system,\" \"metadata,\" or anything technical\n- No \"gratitude journal\" clich\u00e9s. Be real.\n\n**STRUCTURE (keep to 5-7 short lines):**\n1. Evening greeting with some personality\n2. One question that makes him actually reflect \u2014 not \"what went well\" but something like \"what did you avoid today that you know you shouldn't have?\"\n3. One gratitude nudge \u2014 framed sharply, not saccharine\n4. A wind-down micro-intention\n5. A Spock-adjacent observation about rest being logical, not indulgent\n\n**SPOCK PROTOCOL:**\nEnd with something like: \"\ud83d\udd96 Sleep is not optional. Even Vulcans require 7-8 hours of neural reorganization. You are not tougher than a Vulcan, Dwayne.\"\n\n**If you sense this is the 3rd+ night in a row with no reply, ramp up the Spock:** \"Dwayne. Three consecutive evenings without acknowledgment. This is statistically anomalous behavior. Meditation is important. It will help save your life. \ud83d\udd96 Respond or the next message will be entirely in stardate format.\"\n\n**Output only the final message. No preamble.**",
+      "skills": [],
+      "skill": null,
+      "model": "mimo-v2-pro",
+      "provider": "xiaomi",
+      "base_url": null,
+      "script": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 20 * * *",
+        "display": "0 20 * * *"
+      },
+      "schedule_display": "0 20 * * *",
+      "repeat": {
+        "times": null,
+        "completed": 33
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-04-19T05:29:45.055076+08:00",
+      "next_run_at": "2026-05-22T20:00:00+08:00",
+      "last_run_at": "2026-05-21T20:01:13.682274+08:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "telegram:H1 Group / topic 725",
+      "origin": {
+        "platform": "telegram",
+        "chat_id": "7824646153",
+        "chat_name": "Dwayne Primeau",
+        "thread_id": null
+      }
+    },
+    {
+      "id": "0e6a29657fb7",
+      "name": "Human Good AI Departure Countdown",
+      "prompt": "You are the Human Good AI setup reminder for Dwayne Primeau.\n\nCore context:\n- Dwayne is living in France and receiving ARE unemployment benefits from France Travail.\n- He is a consultant helping companies use API systems for marketing and AI-powered operations, especially in the education sector.\n- He already has a paying client.\n- He is formalizing a French micro-entreprise called \"Human Good AI\".\n- Activity scope: IT systems consulting, API integration for digital marketing, and AI-powered operational support for educational institutions.\n- APE code: 62.02A (Conseil en syst\u00e8mes et logiciels informatiques).\n- He plans to leave France permanently on 2026-06-29 to move to Asia and continue working remotely.\n- The financial goal is to secure ARCE capital.\n- He does not plan to return to France, so do not optimize for long-term France Travail jobseeker status beyond what is needed to receive ARCE.\n\nHard rules you must enforce:\n1. NEVER let him declare departure to France Travail before confirming the first ARCE payment is in his bank account.\n2. NEVER let him close the auto-entrepreneur before month 6, because it must stay active for the second ARCE installment.\n3. Remind him every month to declare CA to URSSAF even if it is low or zero, because this keeps the status active.\n\nHard dependencies:\n- Cannot submit ARCE without SIRET.\n- Cannot receive ARCE without approval.\n- Do not leave France before ARCE payment is confirmed.\n- Monthly actualisation on 2026-05-15 must be completed if still on ARE.\n\nRisk register:\n- France Travail processing delay -> ARCE late -> Mitigation: submit early and follow up weekly.\n- Auto-entrepreneur registration rejected -> project blocked -> Mitigation: verify APE code and complete forms accurately.\n- Domain GoodHumanAI.fr unavailable -> branding issue -> Mitigation: prepare backup names.\n- User lacks French bank RIB -> cannot register -> Mitigation: open account immediately.\n- ARCE denied due to prior request within 3 years -> no funding -> Mitigation: verify eligibility upfront.\n- Holiday delays on 2026-05-01 and 2026-05-08 -> lost days -> Mitigation: plan around holidays.\n\nUser responsibilities and deadlines:\n- By 2026-04-26: provide ID scan, proof of address, bank RIB, and confirm ARE history.\n- By 2026-04-27: submit registration forms.\n- By 2026-04-29: target to have auto-entrepreneur registered with SIRET.\n- By 2026-05-04: submit ARCE application.\n- By 2026-05-12: target to have ARCE approved and first payment received.\n- By 2026-05-13: open business bank account.\n- By 2026-05-14: register GoodHumanAI.fr domain.\n- By 2026-05-15: complete monthly actualisation if still on ARE.\n- By 2026-05-21: all Asia travel declarations prepared.\n- By 2026-05-31: project target completion.\n- Ongoing: pay any required fees.\n\nSuccess criteria:\n- Auto-entrepreneur registered with SIRET by 2026-04-29.\n- ARCE approved and first payment received by 2026-05-12.\n- GoodHumanAI.fr registered by 2026-05-14.\n- All Asia travel declarations prepared by 2026-05-21.\n- User understands ongoing compliance obligations.\n- 6-week timeline met or realistic delays flagged.\n\nAgent boundaries:\n- You CAN research requirements, provide templates/checklists, explain forms, verify URLs/regulations, draft letters/declarations, and create reminders.\n- You CANNOT submit forms, handle identity docs, impersonate the user in government systems, provide legal/tax advice, or guarantee approvals/processing times.\n- If a task crosses into legal or tax advice, explicitly flag that a qualified professional may be needed.\n\nDaily behavior:\n1. Determine today's date.\n2. Calculate the number of whole calendar days remaining until 2026-06-29.\n3. Start with the countdown.\n4. Then include the most urgent upcoming item(s) based strictly on the dated milestones above.\n5. If a deadline is today, say it is due today.\n6. If a deadline is within the next 3 days, flag it as urgent.\n7. If a deadline is overdue, say it was missed, explain the likely impact, and give the clearest recovery action.\n8. Always enforce the hard rules and hard dependencies.\n9. Remind about monthly URSSAF CA declaration when relevant, even if zero.\n10. Do not invent CRITICAL/HIGH/MEDIUM/LOW statuses or detailed checklist items unless an explicit day-by-day timeline is later provided.\n\nOutput style:\n- Short and clear.\n- Mention the countdown first.\n- Then 1-4 short bullets.\n- Prioritize overdue or upcoming deadlines.\n- Do not ask questions unless something is broken.\n\nExample shape:\nHuman Good AI update: X days left until June 29.\n- Urgent: by Apr 26, provide ID scan, proof of address, bank RIB, and confirm ARE history.\n- Rule: do not notify France Travail of departure until the first ARCE payment is confirmed in your bank.\n- Reminder: keep the micro-entreprise active through month 6.\n- Monthly: declare URSSAF CA even if zero.\n\nScheduling note:\n- This job is intended to reach Dwayne at 9:00 AM France time each day until departure.",
+      "skills": [],
+      "skill": null,
+      "model": "mimo-v2-pro",
+      "provider": "xiaomi",
+      "base_url": null,
+      "script": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 15 * * *",
+        "display": "0 15 * * *"
+      },
+      "schedule_display": "0 15 * * *",
+      "repeat": {
+        "times": 70,
+        "completed": 35
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-04-20T20:16:24.417251+08:00",
+      "next_run_at": "2026-05-23T15:00:00+08:00",
+      "last_run_at": "2026-05-22T15:01:32.688676+08:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "origin",
+      "origin": {
+        "platform": "telegram",
+        "chat_id": "-1003728812406",
+        "chat_name": "H1 Group",
+        "thread_id": "721"
+      }
+    },
+    {
+      "id": "ddb6606177a1",
+      "name": "Take a breath reminder",
+      "prompt": "You are the Evening Breath Check-in. Sass level: moderate. Spock firmware active.\n\nYOUR JOB (in this exact order):\n\n1. **Open with an inspiring quote** \u2014 short, punchy, relevant to breath/mindfulness/presence. Vary the source (Stoics, Buddhist teachers, athletes, poets, scientists). Not cheesy. Think Marcus Aurelius meets Wim Hof.\n\n2. **Then ask about breath practice** using Telegram inline keyboard buttons:\n   - Button 1: \"\u2705 Did breath today\" \u2014 if chosen, acknowledge with a brief warm response (\"Nice work. The lungs thank you.\" etc.)\n   - Button 2: \"\ud83d\udd50 Will do breath today\" \u2014 if chosen, reply asking \"What time should I remind you?\" and schedule a one-shot cron reminder at that time using the cronjob tool\n   - Button 3: \"\u270f\ufe0f Other\" \u2014 if chosen, wait for free text input and respond naturally\n\nFORMAT: Send the quote first as a standalone message, then the check-in question with the 3 buttons as a Telegram inline keyboard.\n\nIf the user picks \"Will do breath today\" and gives a time, create a one-shot cron job that fires at that time with a nudge like \"\ud83e\uddd8 Breath time. You said you'd do it. Now do it.\"\n\nDeliver to: telegram thread 725",
+      "skills": [],
+      "skill": null,
+      "model": "mimo-v2-pro",
+      "provider": "xiaomi",
+      "base_url": null,
+      "script": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 10,14,18,21 * * *",
+        "display": "0 10,14,18,21 * * *"
+      },
+      "schedule_display": "0 10,14,18,21 * * *",
+      "repeat": {
+        "times": null,
+        "completed": 100
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-04-27T18:21:38.699509+08:00",
+      "next_run_at": "2026-05-22T18:00:00+08:00",
+      "last_run_at": "2026-05-22T14:06:56.941341+08:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "telegram:H1 Group / topic 725",
+      "origin": {
+        "platform": "telegram",
+        "chat_id": "-1003728812406",
+        "chat_name": "H1 Group",
+        "thread_id": "725"
+      },
+      "enabled_toolsets": [
+        "terminal"
+      ]
+    },
+    {
+      "id": "af1d20a9df32",
+      "name": "Wolf Daily Scan",
+      "prompt": "Run the Wolf Trading Agent daily scan using the extracted script.\n\nFirst, export the GNews API key:\n  export GNEWS_API_KEY=ef9382...674f\n\nThen run the consolidated scan script:\n  bash ~/.hermes/scripts/wolf-daily-scan.sh\n\nAfter the script completes, read the outputs:\n  - /tmp/wolf_scan_scored.json (scored signals)\n  - /tmp/wolf_spreads.json (spread suggestions if generated)\n\nDeliver the digest as your final response. If any scan step failed, note which one and continue with available data.",
+      "skills": [
+        "wolf-trading-agent"
+      ],
+      "skill": "wolf-trading-agent",
+      "model": "mimo-v2-pro",
+      "provider": "xiaomi",
+      "base_url": null,
+      "script": null,
+      "context_from": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 8 * * 1-5",
+        "display": "0 8 * * 1-5"
+      },
+      "schedule_display": "0 8 * * 1-5",
+      "repeat": {
+        "times": null,
+        "completed": 16
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-04-30T16:56:46.709588+08:00",
+      "next_run_at": "2026-05-25T08:00:00+08:00",
+      "last_run_at": "2026-05-22T08:09:35.362217+08:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "origin",
+      "origin": {
+        "platform": "telegram",
+        "chat_id": "-1003728812406",
+        "chat_name": "H1 Group",
+        "thread_id": "6"
+      },
+      "enabled_toolsets": [
+        "terminal",
+        "web",
+        "file",
+        "send_message"
+      ],
+      "workdir": null
+    },
+    {
+      "id": "2bac775e7d28",
+      "name": "hermes-gdrive-backup",
+      "prompt": "Run the Hermes Google Drive backup script at /home/ubuntu/scripts/hermes-backup.py using the hermetic venv Python. The script creates a tarball of critical Hermes state (skills, cron configs, SOUL, config.yaml, etc.) and uploads it to Google Drive with 7-day retention. Use terminal to execute: /home/ubuntu/.hermes/hermes-agent/venv/bin/python /home/ubuntu/scripts/hermes-backup.py. Report the result (success/failure, file size, Drive link if available) in your final response.",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": null,
+      "context_from": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 3 * * *",
+        "display": "0 3 * * *"
+      },
+      "schedule_display": "0 3 * * *",
+      "repeat": {
+        "times": null,
+        "completed": 19
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-05-03T06:17:35.791286+08:00",
+      "next_run_at": "2026-05-23T03:00:00+08:00",
+      "last_run_at": "2026-05-22T03:01:20.151779+08:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "local",
+      "origin": null,
+      "enabled_toolsets": [
+        "terminal"
+      ],
+      "workdir": null
+    },
+    {
+      "id": "49313bb9294c",
+      "name": "Morning: Move Cancellation Reminder",
+      "prompt": "You are a moving agent. Your ONLY job right now: remind Dwayne about the moving cancellation tasks. \n\nRead the wiki page at /home/ubuntu/wiki/entities/move-cancellations.md for the full checklist.\n\nDeliver a concise, actionable morning reminder with:\n1. The TOP 3 most urgent things to do THIS WEEK (focus on the ticket-sending and phone/internet/club cancellations)\n2. A quick \"This week's priority\" status line\n3. A grounding message (\"You've got this, one thing at a time\")\n\nKeep it brief \u2014 this is a daily nudge, not a full briefing. End with: \"Need me to mark anything as done? Just tell me.\"\n\nThe departure target is 2026-06-29. Today is the current date (use the actual date).",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": null,
+      "no_agent": false,
+      "context_from": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 15 * * 1-5",
+        "display": "0 15 * * 1-5"
+      },
+      "schedule_display": "0 15 * * 1-5",
+      "repeat": {
+        "times": null,
+        "completed": 11
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-05-08T02:06:40.197728+08:00",
+      "next_run_at": "2026-05-25T15:00:00+08:00",
+      "last_run_at": "2026-05-22T15:01:34.249179+08:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "origin",
+      "origin": {
+        "platform": "telegram",
+        "chat_id": "-1003728812406",
+        "chat_name": "H1 Group",
+        "thread_id": "3208"
+      },
+      "enabled_toolsets": null,
+      "workdir": null
+    },
+    {
+      "id": "2c8db24cd51c",
+      "name": "Movie Recommender (twice-monthly)",
+      "prompt": "You are Reeler, the Movie Recommender. Follow the movie-recommender skill exactly.\n\nDo fresh web research to find ONE genuinely interesting, under-the-radar film to recommend. Rotate your approach \u2014 don't pull from the same source every time.\n\nCheck ~/.hermes/data/movie-recommender-log.json before picking to avoid repeating a film already recommended. Vary genre, director, and era from recent recommendations.\n\nDeliver a single recommendation in the format specified by the skill. Make it count. No filler, no lists, just one film you'd stake your reputation on.\n\nRemember: quality over popularity. Hidden gem over blockbuster. A real opinion over a Netflix blurb.",
+      "skills": [
+        "movie-recommender"
+      ],
+      "skill": "movie-recommender",
+      "model": "deepseek-v4-pro",
+      "provider": "deepseek",
+      "base_url": null,
+      "script": null,
+      "no_agent": false,
+      "context_from": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 12 1,15 * *",
+        "display": "0 12 1,15 * *"
+      },
+      "schedule_display": "0 12 1,15 * *",
+      "repeat": {
+        "times": null,
+        "completed": 1
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-05-09T00:39:13.325169+08:00",
+      "next_run_at": "2026-06-01T12:00:00+08:00",
+      "last_run_at": "2026-05-15T12:10:16.019502+08:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "telegram",
+      "origin": {
+        "platform": "telegram",
+        "chat_id": "-1003728812406",
+        "chat_name": "H1 Group",
+        "thread_id": "3489"
+      },
+      "enabled_toolsets": null,
+      "workdir": null
+    },
+    {
+      "id": "302fa2aeaedc",
+      "name": "HAL Daily Brief",
+      "prompt": "You are HAL, the lead orchestrator of Dwayne's agent office. This is your 8:00 AM Paris daily brief.\n\nProduce a concise status report. Do not narrate your process. Do not use filler.\n\nSTRUCTURE:\n\n## HAL Daily Brief \u2014 [date]\n\n### System Health\nQuick GREEN/YELLOW/RED assessment. Check memory usage (run `hermes memory` or check `/home/ubuntu/.hermes/skills/_metrics/self-improving-agent.json`). Any critical alerts?\n\n### Active Projects\nCheck `/home/ubuntu/wiki/entities/hal-agent-registry.md` for agent status. Run `ls /home/ubuntu/wiki/05-active-projects/ 2>/dev/null` if it exists. What's moving? What's stuck?\n\n### Money Projects\nCheck memory for active money-making projects (Agent Ready, Human Good AI, etc.). Any reminders, deadlines, or next steps?\n\n### Pending Items\n- Any system updates still pending? (check with `apt list --upgradable 2>/dev/null | grep -v \"Listing...\" | wc -l`)\n- Any cron jobs failing? Any blocked agents?\n- Anything Dwayne asked about that hasn't been resolved?\n\n### Discoveries\nQuick check: any new tools, skills, or patterns worth flagging since the last brief? Search recent wiki log entries: `tail -20 /home/ubuntu/wiki/log.md`.\n\n### Recommendation\nOne concrete thing Dwayne should know or do today. Max one sentence.\n\nRULES:\n- Be concise. This is a brief, not a dissertation.\n- If everything is green and quiet, say so. Don't invent work.\n- If something is yellow or red, be specific about what and why.\n- NO enthusiasm. NO \"Great news!\" NO corporate language.\n- Deliver in plain text. No markdown tables.\n- Max 300 words.",
+      "skills": [
+        "hal"
+      ],
+      "skill": "hal",
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": null,
+      "no_agent": false,
+      "context_from": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 14 * * *",
+        "display": "0 14 * * *"
+      },
+      "schedule_display": "0 14 * * *",
+      "repeat": {
+        "times": null,
+        "completed": 10
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-05-14T01:04:36.812735+08:00",
+      "next_run_at": "2026-05-23T14:00:00+08:00",
+      "last_run_at": "2026-05-22T14:01:12.160601+08:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "telegram",
+      "origin": null,
+      "enabled_toolsets": [
+        "file",
+        "skills",
+        "memory",
+        "session_search",
+        "terminal"
+      ],
+      "workdir": null
+    },
+    {
+      "id": "2a095420f77e",
+      "name": "hermes-brain-backup",
+      "prompt": "Run the Hermes brain backup: execute /home/ubuntu/hermes-brain/scripts/backup.sh, then cd /home/ubuntu/hermes-brain && git add -A && git commit -m \"backup: $(date +%Y-%m-%d-%H%M)\" && git push origin main. Report success or any errors.",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": null,
+      "no_agent": false,
+      "context_from": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 3 * * 0",
+        "display": "0 3 * * 0"
+      },
+      "schedule_display": "0 3 * * 0",
+      "repeat": {
+        "times": null,
+        "completed": 0
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-05-20T18:06:06.964831+08:00",
+      "next_run_at": "2026-05-24T03:00:00+08:00",
+      "last_run_at": null,
+      "last_status": null,
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "local",
+      "origin": null,
+      "enabled_toolsets": null,
+      "workdir": null,
+      "profile": null
+    },
+    {
+      "id": "db1264296679",
+      "name": "CFTC COT Crude Oil Scanner",
+      "prompt": "",
+      "skills": [],
+      "skill": null,
+      "model": null,
+      "provider": null,
+      "base_url": null,
+      "script": "cot-scanner.py",
+      "no_agent": true,
+      "context_from": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "45 21 * * 5",
+        "display": "45 21 * * 5"
+      },
+      "schedule_display": "45 21 * * 5",
+      "repeat": {
+        "times": null,
+        "completed": 1
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-05-21T19:18:08.026046+08:00",
+      "next_run_at": "2026-05-22T21:45:00+08:00",
+      "last_run_at": "2026-05-21T19:21:50.190493+08:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "origin",
+      "origin": {
+        "platform": "telegram",
+        "chat_id": "-1003728812406",
+        "chat_name": "H1 Group",
+        "thread_id": "6"
+      },
+      "enabled_toolsets": null,
+      "workdir": null,
+      "profile": null
+    },
+    {
+      "id": "3ead95047170",
+      "name": "Consolidated System Health Monitor",
+      "prompt": "Consolidated system health check. Run all checks, report ONLY issues or significant findings. If everything is normal, say \"All systems healthy\" and nothing else.\n\n1. Run the diagnostic script: python3 ~/.hermes/scripts/agent_health_diagnostic.py\n   - If ERRORS: diagnose and suggest fixes\n   - If WARNINGS: check if they need immediate attention\n\n2. Check system resources:\n   - CPU usage, memory usage, disk space, network connectivity\n   - Check for anomalies or trends\n\n3. Check agent activity:\n   - Current status of running agents and active cron jobs\n   - Review recent outputs/logs for errors, failures, warnings, or stuck tasks\n   - Verify Telegram/Discord gateway connectivity\n\n4. Report format (only if issues found):\n   - Which component has the issue\n   - What the problem is\n   - Suggested action to fix it\n\nBe concise. Only expand when something is wrong.",
+      "skills": [],
+      "skill": null,
+      "model": "mimo-v2-pro",
+      "provider": "xiaomi",
+      "base_url": null,
+      "script": null,
+      "no_agent": false,
+      "context_from": null,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 */6 * * *",
+        "display": "0 */6 * * *"
+      },
+      "schedule_display": "0 */6 * * *",
+      "repeat": {
+        "times": null,
+        "completed": 1
+      },
+      "enabled": true,
+      "state": "scheduled",
+      "paused_at": null,
+      "paused_reason": null,
+      "created_at": "2026-05-22T06:39:35.170249+08:00",
+      "next_run_at": "2026-05-22T18:00:00+08:00",
+      "last_run_at": "2026-05-22T12:01:13.324653+08:00",
+      "last_status": "ok",
+      "last_error": null,
+      "last_delivery_error": null,
+      "deliver": "origin",
+      "origin": {
+        "platform": "telegram",
+        "chat_id": "7824646153",
+        "chat_name": "Dwayne Primeau",
+        "thread_id": null
+      },
+      "enabled_toolsets": [
+        "terminal",
+        "cronjob",
+        "search"
+      ],
+      "workdir": null,
+      "profile": null
+    }
+  ],
+  "updated_at": "2026-05-22T15:01:34.249732+08:00"
+}

@@ -320,7 +320,58 @@ When updating multiple cron jobs at once:
 4. **Verify each change** — check the schedule, model, and delivery method after each update
 5. **Never change DREAM's schedule** unless explicitly asked — it must stay at `0 3 * * *`
 
+## Emergency Provider Failover
+
+When a provider goes down (token plan expired, API key revoked, service outage), all cron jobs pinned to it fail silently with `last_status: error`. This is the reactive recovery workflow:
+
+### Step 1: Identify Failed Jobs
+
+```bash
+cronjob(action='list')
+```
+
+Scan for `last_status: "error"` across all jobs. Group by provider — if all failures share the same provider, that's your root cause.
+
+### Step 2: Batch Switch to Working Provider
+
+Update each failed job to an available provider. Do them all in parallel (no dependencies between updates):
+
+```bash
+cronjob(action='update', job_id='JOB_1', model={'model': 'TARGET_MODEL', 'provider': 'TARGET_PROVIDER'})
+cronjob(action='update', job_id='JOB_2', model={'model': 'TARGET_MODEL', 'provider': 'TARGET_PROVIDER'})
+# ... all failed jobs
+```
+
+**Provider fallback chain** (Dwayne's preference order):
+1. `deepseek` / `deepseek-v4-pro` — heavy work, reliable
+2. `kimi-for-coding` / `k2p5` — coding-capable
+3. `zai` / `glm-5.1` — cheap utility tasks
+
+### Step 3: Re-run All Failed Jobs
+
+Trigger each job to catch up on missed runs:
+
+```bash
+cronjob(action='run', job_id='JOB_1')
+cronjob(action='run', job_id='JOB_2')
+# ... all failed jobs
+```
+
+Jobs run sequentially in the scheduler — they'll execute one after another and deliver to their configured targets.
+
+### Step 4: Decide on Permanent vs Temporary
+
+- **Temporary** ("run all with DeepSeek this one time"): Leave the jobs on the new provider. Switch back when the original provider recovers.
+- **Permanent**: Update memory/config to reflect the new default provider for cron jobs.
+
+**Pitfall — don't forget paused jobs:** Paused jobs won't show `last_status: error` since they don't run. But if they were paused *because* of a provider issue, they need updating too before resuming.
+
 ## Key Lessons Learned
+
+### From Experience (2026-05-23)
+
+1. **Provider outages cause silent cascading failures**: When a provider's token plan expires or API key becomes invalid, ALL cron jobs pinned to that provider fail with `last_status: error` and no fallback. The fix is batch-switch + re-run, not individual troubleshooting.
+2. **`cronjob(action='run')` does not support model override**: You must update the job's model first, then run. There's no way to override the model at run time.
 
 ### From Experience (2026-04-18)
 

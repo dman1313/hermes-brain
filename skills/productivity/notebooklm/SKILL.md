@@ -109,6 +109,51 @@ The user may use these shorthand command shapes. Map them to the real `nlm` comm
 | `notebooklm research status <id>` | `nlm research status <id>` |
 | `notebooklm research import <id> <task-id>` | `nlm research import <id> <task-id>` |
 
+### Research as Web Fallback
+
+When external search APIs are unavailable (Firecrawl subscription expired, MCP rate limits hit, GLM reader exhausted), NotebookLM's built-in research engine is an independent fallback. It has its own web search capability that doesn't depend on Nous subscription or MCP quotas.
+
+**Workflow (parallel strategy — preferred):**
+1. `nlm notebook create "Topic — Date"` — create a fresh notebook
+2. `nlm research start "detailed query" --notebook-id <id> --mode deep` — NotebookLM searches the web itself
+3. **In parallel**, add key URLs directly: `nlm source add <id> --url "..."` for each known authoritative source
+4. Wait for research completion (see blocking behavior pitfall below)
+5. `nlm research import <notebook-id> <task-id>` — import discovered sources into the notebook
+6. `nlm notebook query <id> "synthesis question"` — query all sources
+
+**This produced 61 sources from a single deep research call when all other web tools were down.**
+
+**Pitfall: Research import can fail even when manual sources exist.** `research import` only imports sources *the research engine found* — it does not include manually added URLs. If import returns "No sources were found in the research results", the manually added sources are still queryable. This is why the parallel strategy matters: add URLs directly so you always have content even if research finds nothing.
+
+**Pitfall: Cloudflare-blocked sources are useless.** Many education sites (IBO, OECD, UNESCO) block automated fetching via Cloudflare. These get added as sources but contain only "Just a moment..." — zero usable content. After adding URLs, run `nlm source list <id> --url` and check titles. Sources titled "Just a moment..." or "403 Forbidden" will not contribute to queries. Don't waste query budget on them.
+
+**Post-research enrichment: Save synthesis back to notebook.** After completing a multi-query research session, add the final synthesis document as a text source: `nlm source add <id> --file /path/to/synthesis.md --title "Research Synthesis"`. This makes the synthesis queryable alongside the original sources for follow-up questions.
+
+### Pitfall: `nlm research status` Blocks Until Completion
+
+`nlm research status <notebook-id>` does NOT return partial progress — it blocks (hangs) until the research job finishes. For `--mode deep`, this can take 3-5+ minutes, guaranteeing terminal timeouts (default 180s).
+
+**Workaround:** Run in background, then wait:
+```bash
+# Start research
+nlm research start "query" --notebook-id <id> --mode deep
+
+# Check status in background (won't timeout)
+terminal(background=True, command='nlm research status <id>')
+# Returns session_id, e.g. proc_abc123
+
+# Wait for completion (up to 5 min)
+process(action='wait', session_id='proc_abc123', timeout=300)
+# Output shows: "Research Status: Status: completed, Sources found: N"
+
+# Then import
+nlm research import <notebook-id> <task-id>
+```
+
+**Alternative:** If you don't need to poll, just wait ~5 minutes and run `nlm research import` directly — it will error if research isn't done yet, at which point you wait more.
+
+**Pitfall — `--json` not supported on `research status`:** Unlike other nlm commands, `nlm research status` does not accept `--json`. It always outputs formatted text.
+
 ### Aliases
 | `notebooklm alias set <name> <uuid>` | `nlm alias set <name> <uuid>` |
 | `notebooklm alias list` | `nlm alias list` |
@@ -149,6 +194,26 @@ Every task follows this flow:
 
 When the host has no Chrome (headless VPS), authenticate on a machine with a GUI (Dwayne's Mac) then SCP the auth data over. Full procedure: [references/auth-scp-transfer.md](references/auth-scp-transfer.md)
 
+## Research Notebook Index
+
+Notable research notebooks are tracked in [references/research-notebooks.md](references/research-notebooks.md). Use this to find existing notebooks by topic before creating new ones.
+
+## Multi-Query Research Pattern
+
+For comprehensive research sessions (e.g., building a specialist brief), use sequential queries against the same notebook rather than trying to get everything in one question:
+
+1. **Create notebook + add sources** (parallel strategy above)
+2. **Query 1:** Core topic / driving question #1 — get foundational findings
+3. **Query 2:** Risks, limitations, counter-arguments
+4. **Query 3:** Practical recommendations / implementation guidance
+5. **Query 4:** Domain-specific angle (e.g., "What does X framework say about Y?")
+6. **Compile** the answers into a single synthesis document
+7. **Save synthesis back** as a text source for follow-up queries
+
+Each query benefits from the growing source base. NotebookLM's retrieval improves when it has multiple query rounds to surface different relevant passages from the same sources.
+
+**Tip:** Include "Cite specific sources" in each query prompt to get attribution. NotebookLM returns source IDs and cited text, which can be used for proper citations in the synthesis.
+
 ## Style Notes
 
 - Dwayne prefers **step-by-step walkthroughs** with one verified step at a time. Don't dump 5 steps at once — guide sequentially.
@@ -164,6 +229,7 @@ When the host has no Chrome (headless VPS), authenticate on a machine with a GUI
 | "Rate limit exceeded" | Too many calls | Wait 30s, retry |
 | Chrome doesn't launch | Port conflict or headless | Use auth transfer approach for headless servers |
 | Auth fails after SCP transfer | Nested directory from trailing slash | See references/auth-scp-transfer.md §4 — mv files up one level |
+| "No sources were found in the research results" | Research engine found nothing (rate limits, query too narrow, or sites blocked) | Manually added sources still work — query the notebook directly. Add more URLs and retry research with a broader query. |
 
 ## Notes
 

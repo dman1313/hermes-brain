@@ -80,3 +80,9 @@ nlm config set output.format table
 - Package: notebooklm-mcp-cli v0.6.10 (installed via uv)
 - Binary on VPS: /home/ubuntu/.local/bin/nlm
 - Auth data path: ~/.notebooklm-mcp-cli/
+
+## CLI Pitfalls
+
+- `nlm notebook create` does NOT support `--json` — capture the ID from stdout (`ID: <uuid>`)
+- `nlm notebook list --json` works; `nlm notebook list --title` for readable output
+- `nlm source list --json` works; use `--url` for readable output

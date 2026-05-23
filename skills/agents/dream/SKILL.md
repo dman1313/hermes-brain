@@ -254,6 +254,8 @@ The `memory` tool returns "Memory is not available" in the cron environment. **D
 - **Always check `wc -c ~/.hermes/memories/MEMORY.md` BEFORE running sync.** If it's over 3,800 bytes, skip the sync or manually prune MEMORY.md first.
 - **Flag the memory size in every morning brief** until Dwayne approves consolidation. This is the #1 systemic friction point (8+ consecutive nights of escalation, Apr 25–May 14; 23% of user sessions hit memory-full errors on May 14, down from 45% on May 13).
 
+**Active pruning (proven approach, May 23):** Instead of just skipping the sync, actively prune the SHARED_MEMORY section when MEMORY.md is over 3,800 bytes. Use `patch` to replace the bloated `<!-- SHARED_MEMORY_START -->...<!-- SHARED_MEMORY_END -->` block with a compact comment. The audit files already exist in the shared workspace — referencing them in MEMORY.md is redundant. Observed: 4,377 → 3,871 bytes after pruning. This is the most effective way to break the vicious cycle.
+
 ### Session Search Returns Mostly Cron Sessions
 `session_search` with broad queries (correction, error, skill) returns mostly DREAM's own cron sessions, drowning out actual user sessions. Strategy:
 1. Start with `session_search` for initial discovery
@@ -275,15 +277,35 @@ done
 
 3. **Count patterns across files** — Use `grep -c` piped through `grep -v ':0$'` to find which sessions contain a pattern. Run these standard scans every audit:
 ```bash
-# Always run these 4 patterns — they cover the most common issues
+# Always run these 5 patterns — they cover the most common issues
 grep -c 'maximum number of tool-calling' session_YYYYMMDD_*.json | grep -v ':0$'
 grep -c 'previous turn was interrupted' session_YYYYMMDD_*.json | grep -v ':0$'
 grep -c 'exceed the limit\|Memory is full' session_YYYYMMDD_*.json | grep -v ':0$'
 grep -c 'error.*exit_code.*[^0]' session_YYYYMMDD_*.json | grep -v ':0$'
+grep -c 'You just executed tool calls but returned an empty response' session_YYYYMMDD_*.json | grep -v ':0$'
 ```
 This gives you both the count AND which files match, in one pass. The memory-full pattern is particularly important — it's the #1 systemic friction point (observed in 15-45% of all sessions across 8+ consecutive nights).
 
-4. **Detect session duplication (two types)** — Correlate sessions by matching first user messages across different timestamps. There are two distinct duplication types:
+4. **Detect session duplication (two types)** — Correlate sessions by matching first user messages across different timestamps. Group sessions by their first user message (trimmed, lowered) to find duplication clusters:
+```python
+python3 << 'PYEOF'
+import json, os
+from collections import defaultdict
+groups = defaultdict(list)
+for f in sorted(os.listdir('.')):
+    if f.startswith('session_YYYYMMDD_') and not f.startswith('session_cron') and f.endswith('.json'):
+        d = json.load(open(f))
+        msgs = [m for m in d.get('messages',[]) if m.get('role')=='user' and m.get('content')]
+        if msgs:
+            first = str(msgs[0]['content'])[:80].strip().lower()
+            groups[first].append(f)
+for first, files in sorted(groups.items(), key=lambda x: -len(x[1])):
+    if len(files) >= 3:
+        print(f"CLUSTER ({len(files)} sessions): {first}")
+        for f in files: print(f"  {f}")
+PYEOF
+```
+There are two distinct duplication types to distinguish:
 
 **Type A: Model-switch duplicates** — Multiple sessions start with the same message but have different platform/model combos. The old session continues running while a new one starts. Check with:
 ```python
@@ -330,6 +352,20 @@ from hermes_tools import terminal
 # Now os.path.expanduser() works
 ```
 This hit the DREAM cron on both May 12 and May 13 — same error, same fix. The sandbox resets imports between `execute_code` calls, so each block must be self-contained.
+
+### execute_code Script Truncation (Discovered May 2026)
+The DREAM cron's `execute_code` scripts get truncated mid-expression, causing recurring Python errors. Observed on May 16, 18, 20, and 22 — same pattern each time: the script cuts off in the middle of an f-string, method call, or expression.
+
+**Examples of truncated scripts:**
+- `if job.get('id', '')[:12] == 'bcca6a985` (May 16 — string literal cut off)
+- `last_user = str(user_msgs[-1].get('con` (May 20 — method call cut off)
+- `print(f'=== {f} ({sz//1024}KB) | {plat` (May 22 — f-string cut off)
+
+**Root cause:** The model generating the DREAM cron's code runs into token budget limits when writing complex execute_code blocks. The code looks complete to the model but gets truncated before reaching the sandbox.
+
+**Fix:** Keep execute_code scripts under 20 lines. If a script is complex, break it into multiple execute_code calls. Never write multi-line f-strings in execute_code — use simple `print()` with string concatenation instead. Prefer `terminal()` with heredoc for complex Python that needs many lines.
+
+**Impact:** Truncated scripts cause the DREAM cron to waste turns recovering from errors, and in some cases (May 21) the entire audit is lost because the cron never completes successfully.
 
 ### Python One-Liner Quoting in Shell Loops
 When embedding Python in shell `for` loops via `terminal`, `python3 -c "..."` with `$f` variable interpolation causes quoting conflicts (e.g., `str(m["content"])` fails with `NameError: name 'role' is not defined`). **Fix:** Use heredoc syntax instead:
@@ -436,6 +472,42 @@ A cron job that was paused or disabled can silently resume if:
 **Known case:** bcca6a98591b (photo-news Dropbox sync) — paused May 11 after 3 nights of DREAM escalation. Ran 85 times on May 14 with identical output. 5 stream-stale timeouts. Consumed 69% of all cron sessions. This has been the single largest source of token waste across multiple DREAM cycles.
 
 **Action:** When a resurrected job is detected, flag it as CRITICAL in the morning brief. Include the run count, percentage of total cron sessions, and whether the output was identical across runs.
+
+### Empty Response After Tool Calls Pattern
+The assistant executes tool calls (terminal, execute_code, write_file, etc.) but returns an empty or whitespace-only response. The system then injects: "You just executed tool calls but returned an empty response. Please process the tool results above and continue with the task." The user has to manually say "continue" or re-ask.
+
+**Observed May 20, 2026:** 3 sessions (150144, 180145, 180614) with 9 total empty responses. All on CLI with deepseek-v4-pro during Linear integration setup.
+
+**Detection:** Count sessions containing the system-injected message "You just executed tool calls but returned an empty response":
+```bash
+grep -l 'You just executed tool calls but returned an empty response' ~/.hermes/sessions/session_YYYYMMDD_*.json | grep -v session_cron
+```
+Then count occurrences per session with `grep -c`.
+
+**Root cause hypotheses:**
+1. Tool call limits being hit silently (no error, just empty output)
+2. Model producing tool_calls JSON without a content field
+3. Token budget exhausted by tool results, leaving nothing for the response
+
+**Severity:** HIGH — forces user to repeat themselves, wastes turns, erodes trust. Each empty response is a lost interaction.
+
+**Flag in morning brief if:** 2+ sessions in a day show this pattern, OR any single session has 3+ empty responses.
+
+### CLI "Hi" Sessions Duplication Pattern
+Multiple CLI sessions starting with the identical first message ("hi") and following the same subsequent message sequence (model switch note → same question → same API key). All sessions use the same model (deepseek-v4-pro) and platform (CLI).
+
+**Observed May 20, 2026:** 7 sessions (150144, 152545, 163226, 171010, 174345, 180145, 180614) all starting with "hi" then identical Linear integration sequence. Message counts: [28, 7, 11, 15, 19, 25, 29] — mixed pattern (not clean growth or decline).
+
+**Different from Telegram duplication:** This is CLI, not Telegram. No interruption mechanism. The user is voluntarily restarting sessions, possibly because:
+- Previous session didn't complete the task
+- Context was lost between sessions
+- User wanted a fresh start after hitting issues
+
+**Detection:** Group sessions by first user message (trimmed, lowered). If 3+ sessions share the same first message on the same platform/model, it's a duplication cluster. Check if subsequent messages also match to distinguish productive continuations from failed retries.
+
+**Type B2 variant:** Unlike Telegram Type B2 (caused by interruptions), CLI Type B2 is voluntary. The root cause is usually task incompleteness or context loss, not platform mechanics.
+
+**Action:** If the duplication is for a task that has an existing skill (e.g., Linear integration), the skill may need better session-persistent state (memory entries, checkpoint files). If no skill exists, consider creating one.
 
 ### Telegram Multi-Session Project Pattern
 When a Telegram task spans 3+ sessions (frequent interruptions + restarts), the total token consumption can be extreme. On May 14, a single X/Twitter thread project consumed 7 Telegram sessions (142 user messages, 302 assistant messages) due to cascading interruptions on deepseek-v4-pro.

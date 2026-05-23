@@ -196,6 +196,17 @@ Requires `RAGFLOW_API_URL` + `RAGFLOW_API_KEY` (already in `~/.hermes/.env`). Th
 - **`borderBottom` broken in google-api-python-client 2.188.0**: Returns `UNIT_UNSPECIFIED` error. Use `borderBetween` with `padding` + `dashStyle` + `color` + `width` as workaround.
 - **`borderBetween` requires `padding` sub-field**: The insert-table/cell call needs `padding` property on cells or the border won't render. See `references/google-docs-borderbottom-bug.md`.
 
+## News-Driven Momentum Scanner (Complementary)
+
+Wolf finds what people are talking about. The momentum scanner finds what's actually moving on news catalysts. Script at `~/.hermes/scripts/momentum-scanner.py`. Full reference: `references/news-momentum-detection.md`.
+
+**Quick start:**
+```bash
+python3 ~/.hermes/scripts/momentum-scanner.py --sectors quantum,ai --alert
+```
+
+**When to use alongside Wolf:** Pre-market, run both. Wolf for social discovery, momentum for catalyst confirmation. A ticker appearing in both Wolf signals AND momentum alerts is the strongest signal.
+
 ## Extending
 
 ### Adding a subreddit
