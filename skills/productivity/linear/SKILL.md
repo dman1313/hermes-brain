@@ -382,10 +382,16 @@ Combine filters with `or: [...]` for OR logic (default is AND within a filter ob
 - Use `first: N` to limit results and reduce complexity cost
 - Monitor `X-RateLimit-Requests-Remaining` response header
 
+## Pitfalls
+
+- **Project description max 255 chars.** Linear rejects `projectCreate` if `description` exceeds 255 characters. Keep descriptions short; put details in project documents or issue descriptions instead.
+- **Bulk operations via `execute_code`: write payloads to temp files.** Shell-escaping JSON with single quotes is fragile (nested quotes, special chars). Pattern: `write_file("/tmp/linear_payload.json", json.dumps(payload))` then `curl -d @/tmp/linear_payload.json`. Do NOT inline large JSON into shell commands.
+- **`execute_code` imports.** In `execute_code`, `terminal` and `write_file` are NOT in global scope — import them: `from hermes_tools import terminal, write_file`.
+- **`create-project` not in linear_api.py.** The Python helper script doesn't wrap `projectCreate`. Use raw curl or add `raw` subcommand for project creation.
+- **GraphQL errors return HTTP 200.** Always check the `errors` array in the response body. A 200 status with `errors` means partial or failed execution.
+
 ## Important Notes
 
-- Always use `terminal` tool with `curl` for API calls — do NOT use `web_extract` or `browser`
-- Always check the `errors` array in GraphQL responses — HTTP 200 can still contain errors
 - Always use `terminal` tool with `curl` for API calls — do NOT use `web_extract` or `browser`
 - Always check the `errors` array in GraphQL responses — HTTP 200 can still contain errors
 - If `stateId` is omitted when creating issues, Linear defaults to the first backlog state

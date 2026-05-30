@@ -51,10 +51,20 @@ def xurl_search(query: str, max_results: int = 10) -> list[dict]:
             timeout=30,
             text=True,
         )
-        data = json.loads(result.stdout) if result.stdout.strip() else {}
+        raw = result.stdout.strip()
+        if not raw:
+            return []
+        data = json.loads(raw)
         tweets = data.get("data", [])
         return tweets
-    except (subprocess.TimeoutExpired, json.JSONDecodeError, Exception) as e:
+    except json.JSONDecodeError as e:
+        print(f"  [xurl JSON error] {query}: invalid JSON from xurl: {e}",
+              file=sys.stderr)
+        return []
+    except subprocess.TimeoutExpired:
+        print(f"  [xurl timeout] {query}: xurl timed out", file=sys.stderr)
+        return []
+    except (FileNotFoundError, PermissionError) as e:
         print(f"  [xurl error] {query}: {e}", file=sys.stderr)
         return []
 
@@ -68,10 +78,21 @@ def xurl_timeline(username: str, max_results: int = 5) -> list[dict]:
             timeout=30,
             text=True,
         )
-        data = json.loads(result.stdout) if result.stdout.strip() else {}
+        raw = result.stdout.strip()
+        if not raw:
+            return []
+        data = json.loads(raw)
         tweets = data.get("data", [])
         return tweets
-    except Exception as e:
+    except json.JSONDecodeError as e:
+        print(f"  [xurl JSON error] @{username}: invalid JSON from xurl: {e}",
+              file=sys.stderr)
+        return []
+    except subprocess.TimeoutExpired:
+        print(f"  [xurl timeout] @{username}: xurl timed out", file=sys.stderr)
+        return []
+    except (FileNotFoundError, PermissionError) as e:
+        print(f"  [xurl error] @{username}: {e}", file=sys.stderr)
         return []
 
 

@@ -53,12 +53,18 @@ Locations in config.yaml:
 ## Common Safe Cache Paths
 
 Confirmed safe to clear (no functional breakage):
-- `~/.cache/pip/` — often 2-3GB
-- `~/.cache/huggingface/` — often 1-2GB
-- `~/.npm/` — often ~1GB
-- `~/.cache/uv/` — Python package manager cache
-- `~/.cache/node/` — Node.js cache
-- `~/.cache/typescript/` — TS build cache
-- `~/.cache/pnpm/` — pnpm store cache
+- `~/.cache/pip/` — often 2-3GB. Command: `pip cache purge`
+- `~/.cache/huggingface/` — often 1-2GB. Command: `rm -rf ~/.cache/huggingface/`
+- `~/.npm/` — often ~1GB. Command: `npm cache clean --force --cache ~/.npm` (needs `--force` or npm refuses with "cache self-heals")
+- `~/.cache/uv/` — Python package manager cache. Command: `uv cache clean` (may hang on interactive prompt; fallback: `rm -rf ~/.cache/uv/`)
+- `~/.cache/node/` — Node.js cache. Command: `rm -rf ~/.cache/node/` (rebuilds on next use)
+- `~/.cache/typescript/` — TS build cache. Command: `rm -rf ~/.cache/typescript/`
+- `~/.cache/pnpm/` — pnpm store cache. Command: `pnpm store prune`
 
-Typical total recovery: 5-7GB on a well-used Hermes VPS.
+Typical total recovery: 1-3GB on a standard Hermes VPS (5-7GB on heavy ML setups).
+
+NEVER clear (breaks browser automation):
+- `~/.cache/ms-playwright/` — Playwright Chromium binaries
+- `~/.cache/puppeteer/` — Puppeteer Chromium binaries
+- `~/.cache/electron/` — Electron binaries
+- `~/.cache/camoufox/` — Camoufox browser binaries

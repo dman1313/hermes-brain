@@ -5,7 +5,17 @@ description: End-of-session wrap-up — summarizes the session, saves key memori
 
 # Session Wrap-Up
 
-Run this at the end of every session to capture what happened and commit it to long-term memory.
+**Run this at end of EVERY session.** This is not optional — it's how the system maintains durable memory. Skipping it degrades future session quality.
+
+## Session-Start Brain Query
+
+At the start of every session (before main work begins), **ALWAYS query the H1 AI Brain** for context:
+
+```bash
+nlm notebook query <BRAIN_NOTEBOOK_ID> "Summarize everything relevant to what the user is working on now. Include recent sessions, decisions, and open threads."
+```
+
+The H1 AI Brain notebook ID is `e0da9697-4ba3-466f-9a59-1756dd3e5877`. If auth fails, skip gracefully and proceed.
 
 ## Step 0: Ensure AI Brain Notebook Exists
 

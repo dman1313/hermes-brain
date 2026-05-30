@@ -1,0 +1,88 @@
+{
+  "metadata": {
+    "scan_time": "2026-05-29T21:33:02.877859",
+    "scanner": "full",
+    "reddit_posts": 30,
+    "reddit_time": 75.3,
+    "twitter_tweets": 0,
+    "twitter_time": 1.3,
+    "news_articles": 0,
+    "news_time": 0.0,
+    "signals_found": 1
+  },
+  "signals": [
+    {
+      "ticker": "RDDT",
+      "mentions": 30,
+      "sources": [
+        "reddit"
+      ],
+      "total_sentiment": -3.0000000000000013,
+      "sentiment_count": 30,
+      "reddit_score": 0,
+      "reddit_mentions": 30,
+      "twitter_mentions": 0,
+      "news_mentions": 0,
+      "top_posts": [
+        {
+          "text": "Link to reddit.com",
+          "source": "reddit",
+          "subreddit": "wallstreetbets",
+          "score": 0,
+          "url": "https://www.reddit.com/r/wallstreetbets/comments/1ir0k5o/this_sector_youve_never_touched_is_a_10bagger_dd/"
+        },
+        {
+          "text": "Link to reddit.com",
+          "source": "reddit",
+          "subreddit": "wallstreetbets",
+          "score": 0,
+          "url": "https://www.reddit.com/r/wallstreetbets/comments/1k44v3v/tesla_dd_the_myth_of_bouncing_on_bad_earnings_is/"
+        },
+        {
+          "text": "Link to reddit.com",
+          "source": "reddit",
+          "subreddit": "wallstreetbets",
+          "score": 0,
+          "url": "https://www.reddit.com/r/wallstreetbets/comments/1gewp1z/googl_dd_yall_sleeping_on_the_ai_compute_queen/"
+        }
+      ],
+      "reddit_urls": [
+        "https://www.reddit.com/r/wallstreetbets/comments/1ir0k5o/this_sector_youve_never_touched_is_a_10bagger_dd/",
+        "https://www.reddit.com/r/wallstreetbets/comments/1k44v3v/tesla_dd_the_myth_of_bouncing_on_bad_earnings_is/",
+        "https://www.reddit.com/r/wallstreetbets/comments/1gewp1z/googl_dd_yall_sleeping_on_the_ai_compute_queen/",
+        "https://www.reddit.com/r/wallstreetbets/comments/1b1lmcy/dd_acmr_calls_for_tomorrow/",
+        "https://www.reddit.com/r/wallstreetbets/comments/1ddah1y/dnut_yolo_dd_inside/",
+        "https://www.reddit.com/r/wallstreetbets/comments/13s28nj/amzn_yolo/",
+        "https://www.reddit.com/r/wallstreetbets/comments/1cxhj5j/25k_tndm_yolo/",
+        "https://www.reddit.com/r/wallstreetbets/comments/1jwhowh/yolo_2/",
+        "https://www.reddit.com/r/wallstreetbets/comments/1cji253/yolo_arm_calls/",
+        "https://www.reddit.com/r/wallstreetbets/comments/12auegm/200k_leveraged_yolo_on_tlry/",
+        "https://www.reddit.com/r/wallstreetbets/comments/1kb4qy9/meta_earnings_already_priced_in_be_careful_on/",
+        "https://www.reddit.com/r/wallstreetbets/comments/1k5sxqo/the_market_didnt_care_about_teslas_earnings_heres/",
+        "https://www.reddit.com/r/wallstreetbets/comments/1k70ero/everything_about_googles_earnings_tonight/",
+        "https://www.reddit.com/r/wallstreetbets/comments/1fzvuic/earnings_thread_107_1011/",
+        "https://www.reddit.com/r/wallstreetbets/comments/1cfmrhe/amzn_earnings_tuesday/",
+        "https://www.reddit.com/r/stocks/comments/1e4npxd/earnings_are_expected_to_broaden_during_the/",
+        "https://www.reddit.com/r/stocks/comments/1iyybv3/who_clicks_so_fast_during_earnings/",
+        "https://www.reddit.com/r/stocks/comments/1ib7lm2/sofi_earnings_beats_on_top_and_bottom_lines_but_a/",
+        "https://www.reddit.com/r/stocks/comments/12l6cxq/bank_earnings_looming/",
+        "https://www.reddit.com/r/stocks/comments/1els1cs/airbnb_shares_drop_14_on_earnings_miss_as_company/",
+        "https://www.reddit.com/r/options/comments/1eofqv7/my_ultimate_earnings_strategy_play/",
+        "https://www.reddit.com/r/investing/comments/1j2ap9h/i_actually_did_listen_to_an_earnings_call_but_i/",
+        "https://www.reddit.com/r/pennystocks/comments/1jjw5kx/how_to_motivate_more_posting_of_dd_in_this_forum/",
+        "https://www.reddit.com/r/pennystocks/comments/1hbzqw1/agronomics_the_contrarian_yolo_to_stick_it_to_big/",
+        "https://www.reddit.com/r/StockMarket/comments/1c5kc5h/tsm_earnings_ahead/",
+        "https://www.reddit.com/r/StockMarket/comments/131qp9l/amzn_q1_earnings_review/",
+        "https://www.reddit.com/r/StockMarket/comments/1k5io80/tesla_stock_rises_afterhours_trading_despite/",
+        "https://www.reddit.com/r/StockMarket/comments/1ijdwcp/magnificent_7_valuation_growth_and_margins/",
+        "https://www.reddit.com/r/thetagang/comments/1hm6dyt/january_earnings_releases_by_implied_movement/",
+        "https://www.reddit.com/r/thetagang/comments/11frblr/long_volatility_options_trade_for_dell_earnings/"
+      ],
+      "score": 0.233,
+      "tier": "\u26aa NEUTRAL",
+      "avg_sentiment": -0.1,
+      "velocity": 1,
+      "company_name": "Reddit"
+    }
+  ]
+}

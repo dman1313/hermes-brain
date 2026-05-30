@@ -31,9 +31,9 @@ kimi /login
 ```
 Then verify: `kimi -p "Say hello in exactly 5 words"`
 
-## Current Status
+## Cost & Routing
 
-Kimi CLI API key is 401-expired as of 2026-05-13. Use Claude Code (`claude -p`) via Anthropic backend for coding tasks instead.
+Kimi K2.6 is a **paid subscription** (not PAYG). Prefer Kimi for coding tasks — it has the strongest DeepSWE score (24%) among available coding CLIs. DeepSeek is the PAYG fallback (8% DeepSWE). Use Kimi subscription credits before falling back to DeepSeek PAYG.
 
 ## Installation
 

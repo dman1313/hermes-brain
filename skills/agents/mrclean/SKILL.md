@@ -1,7 +1,7 @@
 ---
 name: mrclean
 description: "MrClean — Cleanup & Efficiency Auditor. Hunts stale code, dead APIs, and noisy cron jobs, then turns the mess into a safe cleanup plan."
-version: "1.1"
+version: "1.2"
 created: "2026-04-27"
 owner: Dwayne
 ---
@@ -96,8 +96,9 @@ Every audit should return:
 
 ## Common Quick Wins (check every audit)
 
+- **Cron timeout mismatch**: When a script's internal timeout (e.g. polling loop, long build) exceeds the cron job's timeout, it always fails. Common pattern: script sleeps/polls for 10min but cron timeout is 120s. Fix: restructure to fire-and-forget (submit on one run, check on next) or increase timeout. Check `last_status: error` + "timed out" in cron list output.
 - **Config auto-prune**: Both `checkpoints.auto_prune` and `sessions.auto_prune` default to `false` even when `retention_days` is set. Check and enable — this is almost always a free win.
-- **Safe cache cleanup**: `pip cache purge` + clearing `~/.cache/huggingface/`, `~/.npm/`, `~/.cache/uv/`, etc. typically recovers 5-7GB. See `references/hermes-internals.md` for the full safe list.
+- **Safe cache cleanup**: `pip cache purge` + `npm cache clean --force --cache ~/.npm` + `rm -rf ~/.cache/uv/ ~/.cache/node/` typically recovers 1-3GB. `npm` requires `--force` or it refuses. `uv cache clean` may hang; use `rm -rf` as fallback. See `references/hermes-internals.md` for the full safe list and exact commands.
 - **Cron consolidation**: When 3+ jobs have overlapping scope (e.g. separate health monitors for CPU, agents, and activity), merge into one combined job. High impact: eliminates redundant agent runs and reduces token waste + notification noise.
 - **Inline scripts in cron prompts**: Extract to proper script files in `~/.hermes/scripts/`. Makes them testable, versionable, and less fragile.
 

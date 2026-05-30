@@ -53,14 +53,6 @@ def get_api_key() -> str:
     if key:
         return key
 
-    # Check ~/.hermes/.env
-    env_file = os.path.expanduser("~/.hermes/.env")
-    if os.path.exists(env_file):
-        with open(env_file) as f:
-            for line in f:
-                if line.startswith("GNEWS_API_KEY="):
-                    return line.split("=", 1)[1].strip().strip('"').strip("'")
-
     return ""
 
 
@@ -91,8 +83,14 @@ def search_gnews(query: str, api_key: str, max_results: int = 5,
         body = e.read().decode()[:500] if e.fp else ""
         print(f"  [gnews HTTP {e.code}] {query[:50]}...: {body}", file=sys.stderr)
         return []
-    except Exception as e:
-        print(f"  [gnews error] {query[:50]}...: {e}", file=sys.stderr)
+    except urllib.error.URLError as e:
+        print(f"  [gnews URL error] {query[:50]}...: {e.reason}", file=sys.stderr)
+        return []
+    except json.JSONDecodeError as e:
+        print(f"  [gnews JSON error] {query[:50]}...: {e}", file=sys.stderr)
+        return []
+    except OSError as e:
+        print(f"  [gnews IO error] {query[:50]}...: {e}", file=sys.stderr)
         return []
 
 
@@ -115,7 +113,7 @@ def scan_news(api_key: str = "", verbose: bool = False) -> list[dict]:
     all_articles = []
     seen_urls = set()
 
-    if verbose:
+    if verbose and os.environ.get("DEBUG"):
         print(f"  GNews API key: {api_key[:8]}... ({len(NEWS_QUERIES)} queries)")
 
     for i, query in enumerate(NEWS_QUERIES):

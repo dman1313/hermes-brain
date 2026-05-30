@@ -42,22 +42,46 @@ uv pip install mcp
 
 ## Quick Start
 
-Add MCP servers to `~/.hermes/config.yaml` under the `mcp_servers` key:
+**Important:** `~/.hermes/config.yaml` is a protected file. Do NOT edit it directly — the `patch`/`write_file` tools will be denied. Use the `hermes config set` CLI instead.
 
-```yaml
-mcp_servers:
-  time:
-    command: "uvx"
-    args: ["mcp-server-time"]
+### Add a server (CLI — preferred)
+
+```bash
+# Stdio server
+hermes config set mcp_servers.time.command uvx
+hermes config set mcp_servers.time.args '["mcp-server-time"]'
+
+# HTTP server
+hermes config set mcp_servers.my-api.url "https://mcp.example.com/mcp"
+hermes config set mcp_servers.my-api.enabled true
 ```
 
-Restart Hermes Agent. On startup it will:
+### Apply changes
+
+```bash
+hermes gateway restart
+```
+
+### Verify
+
+```bash
+hermes mcp list
+```
+
+On startup it will:
 1. Connect to the server
 2. Discover available tools
 3. Register them with the prefix `mcp_time_*`
 4. Inject them into all platform toolsets
 
 You can then use the tools naturally -- just ask the agent to get the current time.
+
+## Pitfalls
+
+- **Protected config file**: `~/.hermes/config.yaml` cannot be edited with `patch` or `write_file`. Always use `hermes config set <key> <value>`.
+- **Interactive installers**: `npx add-mcp <url>` uses interactive prompts that fail in non-interactive/PTY-less environments (ERR_TTY_INIT_FAILED). Use `hermes config set` instead.
+- **Restart required**: MCP server changes require `hermes gateway restart` — they do not hot-reload.
+- **Verification**: Always run `hermes mcp list` after adding a server to confirm it shows as enabled and connected.
 
 ## Configuration Reference
 

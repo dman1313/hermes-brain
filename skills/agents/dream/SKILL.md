@@ -1,7 +1,7 @@
 ---
 name: dream
 description: "DREAM — Nightly Reflection & Skill Evolution Engine. Analyzes agent scores, spots patterns, proposes improvements while you sleep."
-version: "1.0"
+version: "1.1"
 created: "2026-04-14"
 owner: Dwayne
 ---
@@ -208,11 +208,15 @@ Before starting the audit, check if the **previous night's audit file** exists:
 ```bash
 ls ~/.hermes/obsidian_workspace/agent_shared/lessons_learned/dream_audit_YYYYMMDD_*.md
 ```
-If it's missing, that means the previous DREAM run failed — add this as a finding immediately. Also check the DREAM cron error logs:
+If it's missing, that means the previous DREAM run failed — add this as a finding immediately. **Check for multi-day gaps** — scan the last 3 nights of audit files, not just the previous one:
 ```bash
-grep 'cron_28bd7873af01' ~/.hermes/logs/errors.log | tail -5
+ls ~/.hermes/obsidian_workspace/agent_shared/lessons_learned/dream_audit_*.md | tail -5
 ```
-A missing audit file is a strong signal that the self-improvement loop is broken. This has been observed repeatedly (Apr 24–25 gap, Apr 18 gap) and should be flagged as HIGH priority.
+A 2+ night gap (observed May 25–26) means the self-improvement loop has been broken longer than a single failure. Also check the DREAM cron error logs:
+```bash
+grep 'cron_28bd7873af01' ~/.hermes/logs/errors.log | tail -10
+```
+A missing audit file is a strong signal that the self-improvement loop is broken. This has been observed repeatedly (Apr 24–25 gap, Apr 18 gap, May 25–26 2-night gap) and should be flagged as HIGH priority.
 
 ### Credential Pool Exhaustion Signature
 If the DREAM cron is failing with empty responses, check for this log pattern:
@@ -254,7 +258,14 @@ The `memory` tool returns "Memory is not available" in the cron environment. **D
 - **Always check `wc -c ~/.hermes/memories/MEMORY.md` BEFORE running sync.** If it's over 3,800 bytes, skip the sync or manually prune MEMORY.md first.
 - **Flag the memory size in every morning brief** until Dwayne approves consolidation. This is the #1 systemic friction point (8+ consecutive nights of escalation, Apr 25–May 14; 23% of user sessions hit memory-full errors on May 14, down from 45% on May 13).
 
-**Active pruning (proven approach, May 23):** Instead of just skipping the sync, actively prune the SHARED_MEMORY section when MEMORY.md is over 3,800 bytes. Use `patch` to replace the bloated `<!-- SHARED_MEMORY_START -->...<!-- SHARED_MEMORY_END -->` block with a compact comment. The audit files already exist in the shared workspace — referencing them in MEMORY.md is redundant. Observed: 4,377 → 3,871 bytes after pruning. This is the most effective way to break the vicious cycle.
+**Active pruning (proven approach, May 23, refined May 24):** Instead of just skipping the sync, actively prune the SHARED_MEMORY section when MEMORY.md is over 3,800 bytes. Use `patch` to replace the entire `<!-- SHARED_MEMORY_START -->...<!-- SHARED_MEMORY_END -->` block with a compact one-liner reference. The audit files already exist in the shared workspace — individual references in MEMORY.md are redundant. Proven compact replacement:
+```
+<!-- SHARED_MEMORY_START -->
+§
+Shared workspace: ~/.hermes/obsidian_workspace/agent_shared/ (lessons_learned/, workflow_templates/). See dream_audit_*.md files there. DREAM nightly at 03:00 UTC.
+<!-- SHARED_MEMORY_END -->
+```
+Observed: 4,377 → 3,871 bytes (May 23), 3,998 → 3,922 bytes (May 24). The sync script regenerates the block nightly, so this pruning must happen every run until the sync is disabled. This is the most effective way to break the vicious cycle.
 
 ### Session Search Returns Mostly Cron Sessions
 `session_search` with broad queries (correction, error, skill) returns mostly DREAM's own cron sessions, drowning out actual user sessions. Strategy:
@@ -353,6 +364,32 @@ from hermes_tools import terminal
 ```
 This hit the DREAM cron on both May 12 and May 13 — same error, same fix. The sandbox resets imports between `execute_code` calls, so each block must be self-contained.
 
+### execute_code read_file Deduplication (Discovered May 29)
+When calling `read_file` from `execute_code`, the return dict has keys: `status`, `message`, `path`, `dedup`, `content_returned`. **The key is `content_returned`, NOT `content`.** More critically, `content_returned` is a **boolean** — it's `True` when content was returned, `False` when the file was deduplicated (already read earlier in the conversation). The actual file content is NOT in the return dict on dedup hits.
+
+**Observed May 29:** The DREAM cron hit `KeyError: 'content'` three times trying to access `result['content']` from a `read_file` call. The same error hit this session's DREAM run twice before diagnosis.
+
+**Why this happens:** `read_file` deduplicates by path — if you read the same file twice in one conversation, the second call returns `content_returned: False` with a message like "File unchanged since last read."
+
+**Fix — two options:**
+1. **Read once, cache in variable.** Never call `read_file` on the same path twice in one `execute_code` block.
+2. **Use `terminal` with heredoc for file parsing** when you need to re-read files:
+```python
+r = terminal("python3 << 'PYEOF'\nimport json\nwith open('/path/to/file.json') as f:\n    data = json.load(f)\n# process data\nPYEOF")
+```
+3. **Check `content_returned` before accessing content:**
+```python
+r = read_file('/path/to/file')
+if r.get('content_returned'):
+    # Content was returned in the conversation context
+    pass
+else:
+    # File was deduplicated — fall back to terminal
+    r = terminal("cat /path/to/file")
+```
+
+**Rule of thumb:** In `execute_code`, prefer `terminal` with heredoc for file reading. Reserve `read_file` for single-read cases where you know the file hasn't been read yet in this conversation.
+
 ### execute_code Script Truncation (Discovered May 2026)
 The DREAM cron's `execute_code` scripts get truncated mid-expression, causing recurring Python errors. Observed on May 16, 18, 20, and 22 — same pattern each time: the script cuts off in the middle of an f-string, method call, or expression.
 
@@ -366,6 +403,15 @@ The DREAM cron's `execute_code` scripts get truncated mid-expression, causing re
 **Fix:** Keep execute_code scripts under 20 lines. If a script is complex, break it into multiple execute_code calls. Never write multi-line f-strings in execute_code — use simple `print()` with string concatenation instead. Prefer `terminal()` with heredoc for complex Python that needs many lines.
 
 **Impact:** Truncated scripts cause the DREAM cron to waste turns recovering from errors, and in some cases (May 21) the entire audit is lost because the cron never completes successfully.
+
+### execute_code f-string Curly Brace Conflict (Discovered May 29)
+When an f-string in `execute_code` contains content with literal curly braces (e.g., JSON output, error messages with braces), Python interprets them as format specifiers and raises `ValueError: Invalid format specifier`.
+
+**Observed May 29:** An f-string containing a GLMS error message with JSON (`{"error":{"code":"1310","message":"Weekly/Monthly Limit..."}}`) caused `ValueError: Invalid format specifier '"1310","message"...'`. The curly braces in the error message were treated as f-string format expressions.
+
+**Fix:** Never embed raw error messages or JSON inside f-strings. Use string concatenation (`+`) or `str.format()` instead. Or assign the problematic string to a variable first and reference it by name in the f-string. For audit content blocks, prefer triple-quoted regular strings (no `f` prefix) and use `.format()` or `%` formatting only where needed.
+
+**Rule of thumb:** If the `execute_code` script contains any string that might have curly braces (error logs, JSON snippets, API responses), do NOT use f-strings. Use plain string concatenation.
 
 ### Python One-Liner Quoting in Shell Loops
 When embedding Python in shell `for` loops via `terminal`, `python3 -c "..."` with `$f` variable interpolation causes quoting conflicts (e.g., `str(m["content"])` fails with `NameError: name 'role' is not defined`). **Fix:** Use heredoc syntax instead:
@@ -517,6 +563,80 @@ When a Telegram task spans 3+ sessions (frequent interruptions + restarts), the 
 **Root cause:** Telegram's one-shot delivery + slow model latency = interruptions on tool-heavy sequences.
 
 **Action:** Flag in morning brief with session count and total message volume. Propose faster model routing for Telegram tool-heavy tasks (mimo-v2.5-pro over deepseek-v4-pro).
+
+### Error Log Fallback Analysis (When Session Files Are Gone)
+When session files have been cleaned up by the nightly archival cron before DREAM can analyze them, `~/.hermes/logs/errors.log` is the only remaining signal. This is an incomplete picture but better than nothing.
+
+**How to extract signal from error logs:**
+1. Filter by date: `grep '2026-05-26' ~/.hermes/logs/errors.log`
+2. Extract session IDs from log entries: they appear in brackets like `[session_20260526_224950_51ff54]` or `[cron_JOBID_DATE_TIME]`
+3. Categorize errors by tool type (memory, terminal, image_generate, web_search, MCP, skill_manage, etc.)
+4. Count errors per category — high counts indicate systematic failures, not one-offs
+
+**What error logs CAN tell you:**
+- Which tools failed and how many times
+- Whether errors are clustered in one session or spread across many
+- External service outages (Telegram network errors, MCP rate limits, API rejections)
+- MEMORY.md over-limit errors (file refusing writes)
+
+**What error logs CANNOT tell you:**
+- Whether the user was frustrated or had to repeat themselves
+- Whether the agent recovered gracefully or gave up
+- The actual content of user requests
+- Whether sessions completed successfully despite errors
+
+**Always note the limitation in the audit.** Score coverage at 0.3–0.4 when relying solely on error logs — the data is real but incomplete.
+
+**Observed May 27:** Session files from May 25–26 were archived before DREAM ran. Error logs revealed 293 combined tool errors across those two days — the highest 2-day count in the log. This was invisible without the fallback approach.
+
+**Recurring issue (May 29):** ALL May 28 session files were cleaned up before DREAM could analyze them. Error logs were the only signal. This is now the 3rd occurrence of cleanup-before-analysis in the DREAM audit history.
+
+**Timing fix:** The cleanup cron (`59ebc5bd5e4e`) should run AFTER DREAM (03:00 UTC), not before. Suggested cleanup window: 05:00–06:00 UTC. If the cleanup cron cannot be rescheduled, DREAM should check for the cleanup cron's run time in the error log and note when it ran relative to DREAM's own run.
+
+### Cascade Failure Pattern
+When one external service starts failing, the agent often retries aggressively, which triggers secondary failures. The pattern: rate limiting → repeated retries → terminal timeouts → memory write failures → session stalls.
+
+**Signature:** A single session showing 50+ errors across multiple tool categories (terminal, memory, MCP, web) in rapid succession. The errors aren't independent — they're cascading from one root cause.
+
+**Observed May 26:** 209 errors in a single day. Root cause: NotebookLM rate limiting. The agent retried `nlm` commands 10+ times, each hitting the rate limit. Each retry consumed terminal errors (timeout), then memory errors (MEMORY.md over limit from error accumulation), then MCP errors (secondary rate limiting from other services).
+
+**Detection:** If terminal errors > 50 in a day AND memory errors > 10, it's likely a cascade rather than independent failures. Look for the first error in the chain — that's the root cause to fix.
+
+**Action:** Flag the cascade as a single finding (not separate findings for each tool). Identify and name the root cause. The fix is usually backoff/retry logic in the relevant skill, not changes to the agent itself.
+
+### Multi-Entry MEMORY.md Pruning
+The SHARED_MEMORY block is the usual target for pruning, but individual user entries can also be bloated. When MEMORY.md is over the threshold even after SHARED_MEMORY pruning, shorten verbose entries by:
+1. Moving detailed CLI quirks, API specifics, and configuration notes to the relevant skill's `references/` directory
+2. Replacing long entries with one-line pointers to the skill ("CLI quirks documented in X skill")
+3. Removing past-dated events (conferences, deadlines that have passed)
+
+**Observed May 27:** SHARED_MEMORY pruning saved only 82 bytes. But shortening 3 verbose user entries (FinceptTerminal, Study Boy, momentum scanner) and removing 1 past event saved 943 additional bytes — enough to bring MEMORY.md from 4,546 to 3,603 bytes (under the 3,800 threshold). The key insight: **skill references are cheaper than inline detail.** If an entry is longer than 150 chars and describes how-to-do-something rather than who-the-user-is, it belongs in a skill.
+
+### MEMORY.md Round-Trip Conflict (Discovered May 29)
+DREAM prunes MEMORY.md via the `patch` tool, which modifies the file content directly. After this, the `memory` tool refuses to write because the file "would not round-trip through the memory tool (likely added by the patch tool, a shell append, a manual edit)." This means any session running after DREAM's prune cannot use the `memory` tool until MEMORY.md is normalized.
+
+**Root cause:** The `memory` tool validates that its internal representation of MEMORY.md matches what's on disk. When `patch` modifies the file externally, the tool's internal cache is stale and it refuses to write to prevent data loss.
+
+**Impact:** Post-DREAM sessions (especially early-morning cron jobs and first user sessions) hit memory write failures. Observed May 28 in session `20260528_013507_459370e4`.
+
+**Mitigation options (choose one, needs Dwayne approval):**
+1. Use the `memory` tool itself for pruning (if available in cron — it usually isn't)
+2. After pruning via `patch`, immediately re-read MEMORY.md through the `memory` tool to sync its cache (only works if memory tool is available)
+3. Accept the conflict — post-DREAM memory writes will fail until a non-DREAM session normalizes the file. Flag in morning brief.
+4. Schedule DREAM to run AFTER the cleanup cron but BEFORE the first user-facing cron job, so the normalization happens naturally.
+
+**For now:** Document in the morning brief whenever DREAM prunes MEMORY.md, so the next session knows memory writes may be affected.
+
+### GLMS Rate Limiting Cascade (Observed May 29)
+The GLMS MCP tools (web_search_prime, webReader, zread_search_doc, zread_get_repo_structure) share a single API quota. When the weekly/monthly limit is exhausted, ALL GLMS tools fail simultaneously with error code 429 and message "Weekly/Monthly Limit Exhausted." The agent retries the same GLMS tools repeatedly, wasting turns.
+
+**Cascade signature:** 11+ GLMS 429 errors across 4 sessions in a single day (May 28). Combined with Firecrawl subscription failures, the agent had zero working web search capability.
+
+**Key difference from other cascades:** GLMS rate limits are weekly/monthly, not per-minute. Once exhausted, no amount of retrying will help — the agent must fall back to alternative tools entirely.
+
+**Detection:** Count GLMS 429 errors with the "Limit Exhausted" message. If > 5 in a day, the limit is exhausted and won't self-heal.
+
+**Action:** When GLMS is exhausted, the morning brief should note: (a) which tools are affected, (b) when the limit resets (from the error message), (c) which alternative tools are available (scrapling for web content, gh CLI for GitHub, web_extract for URLs).
 
 ## Boundaries
 

@@ -30,11 +30,30 @@ A complete workflow for adding SEO-optimized content to a static website. It sta
 - User says "build blog pages so it can rank" or "create content"
 - User says "I need service pages for my site"
 - User provides a `/goal` asking for SEO/content strategy
+- User says "write blogs" or "get the blog ready" (check for existing work first — see Phase 0)
 
 **Limits / Boundaries:**  
 - This skill assumes the site is a **static HTML site deployed via GitHub → Zeabur** (or similar git-based deploy). For CMS-based sites (WordPress, Ghost, etc.), use a different approach.
 - This skill does NOT handle image generation, design system creation from scratch, or full marketing funnels — see `marketing-pipeline` for those.
 - Does NOT configure Cloudflare HSTS or DNS settings — that's a dashboard action.
+
+---
+
+## 1b. Phase 0: Check for Existing Work (ALWAYS DO FIRST)
+
+Before writing any content, search for prior work. Blog/SEO tasks often span multiple sessions. Previous sessions may have:
+- Built blog posts that are committed but not deployed
+- Created an SEO audit with a content roadmap and keyword targets
+- Drafted articles in markdown that aren't yet in the HTML template
+- Identified the blog infrastructure (which repo, which server, local vs deployed state)
+
+**Steps:**
+1. `session_search(query="blog OR SEO OR content OR humangood")` — find prior sessions
+2. `search_files(pattern="*blog*", path="/home/ubuntu")` — find existing blog files
+3. Check git log in the repo: `git log --oneline -10` and `git status --short`
+4. Read the sitemap: `curl -s https://domain.com/sitemap.xml` — compare live vs local
+
+**Why this matters:** In a May 2026 session, the agent found 4 existing blog posts + a full SEO roadmap only because it searched session history first. Without this step, the agent would have written duplicate content. The user's "go back and look at our history" instruction was the trigger — but the skill should do this automatically.
 
 ---
 
@@ -61,6 +80,9 @@ A complete workflow for adding SEO-optimized content to a static website. It sta
 | Blog | Check if `/blog/` or `/blog` exists | Critical |
 
 ### 2.2 Audit output format
+
+**Support files:**
+- `references/research-to-blog-pipeline.md` — two-stage pipeline for research-heavy posts (Sherlock → HTML)
 
 Present as a bullet list with ✅/❌ markers. Group by Critical / High / Medium / Low severity. Include the actual values found (e.g., "Only 2 pages in sitemap", "894 words on homepage").
 
@@ -208,7 +230,7 @@ curl -s https://sitename.com/sitemap.xml | grep "blog"
 | Pitfall | Mitigation |
 |---------|------------|
 | **Blog pages don't match site design** | Copy the EXACT header block from the existing HTML. Use the site's existing styles.css. Only add page-specific override styles. |
-| **Zeabur auto-deploy not triggering after push** | GitHub → Zeabur auto-deploy can silently fail even when the remote shows the latest commit. Check the live site after push — if the sitemap or new pages still show old content after 2+ minutes, log into the Zeabur dashboard and manually trigger a redeploy. An empty commit (`git commit --allow-empty -m "chore: trigger Zeabur redeploy" && git push`) can sometimes wake it up but is not guaranteed. |
+| **Zeabur auto-deploy not triggering after push** | GitHub → Zeabur auto-deploy can silently fail even when the remote shows the latest commit. Check the live site after push — if the sitemap or new pages still show old content after 2+ minutes, log into the Zeabur dashboard and manually trigger a redeploy. An empty commit (`git commit --allow-empty -m "chore: trigger Zeabur redeploy" && git push`) can sometimes wake it up but is not guaranteed. **Persistent issue (May 2026):** Pushes from May 14–24 all failed to auto-deploy. The webhook may be disconnected entirely. Always verify LIVE state before starting blog work — if the live sitemap is stale, flag it to the user immediately rather than building content that won't be visible. |
 | **Sitemap not showing new pages** | The live sitemap is your canary — if it doesn't show blog URLs, Zeabur hasn't deployed. Check with `curl -s https://sitename.com/sitemap.xml | grep blog`. |
 | **Zeabur not actually the deploy target** | Check `x-zeabur-request-id` header on the live site. If absent, check for Cloudflare tunnel, Cloudflare Pages, or other hosting. Run `curl -sI https://sitename.com/ \| grep -i 'x-zeabur\\|server\\|cf-ray'`. |
 | **Zeabur auto-deploy doesn't trigger** | GitHub push may succeed but Zeabur doesn't always pick it up. Verify deployment by checking `curl -sI https://sitename.com/sitemap.xml` — if it still shows old content, Zeabur didn't deploy. Wait 2-3 minutes first (sometimes just slow). If still stale: push an empty commit (`git commit --allow-empty -m "chore: trigger redeploy" && git push`). If that fails too, the user needs to trigger manual redeploy from Zeabur dashboard. The blog files ARE on main — this is a deployment pipeline issue, not a code issue. |

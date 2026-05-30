@@ -1,0 +1,8 @@
+# Quant Stock Scanner cache files
+/tmp/quant-scan-cache/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/

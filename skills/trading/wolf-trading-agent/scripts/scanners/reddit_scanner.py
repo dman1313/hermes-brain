@@ -3,10 +3,16 @@
 
 Uses the duckduckgo_search Python library (free, no API key needed).
 Fallback: raw HTML scraping if library isn't installed.
+
+⚠️  WARNING: DuckDuckGo has been returning empty results since May 2026.
+    If content is empty or near-empty, this scanner will skip gracefully.
+    Set BROKEN_SOURCES=1 or REDDIT_SKIP=1 in environment to disable this
+    scanner entirely when DDG is non-functional.
 """
 
 import sys
 import json
+import os
 from datetime import datetime
 
 # Subreddits to scan
@@ -102,6 +108,12 @@ def search_reddit_fallback(subreddit: str, max_results: int = 10) -> list[dict]:
 
 def scan_reddit(verbose: bool = False) -> list[dict]:
     """Run full Reddit scan. Returns list of parsed post dicts."""
+    # Allow full skip via environment variable when DDG is broken
+    if os.environ.get("BROKEN_SOURCES") or os.environ.get("REDDIT_SKIP"):
+        if verbose:
+            print("  [reddit] Skipped — BROKEN_SOURCES or REDDIT_SKIP is set")
+        return []
+
     DDGS = try_import_ddgs()
     all_results = []
     seen_urls = set()
@@ -127,6 +139,17 @@ def scan_reddit(verbose: bool = False) -> list[dict]:
 
         if verbose:
             print(f"    → {len([r for r in all_results if r.get('subreddit') == sub])} posts")
+
+    # ⚠️  Empty content guard: DDG has been returning empty results since May 2026.
+    # If we got very few or empty results, warn and return empty gracefully.
+    if len(all_results) < 3:
+        total_content = sum(len(r.get("body", "") or "") for r in all_results)
+        if total_content < 500:
+            print("  ⚠️  [reddit] DDG returned near-empty results (known issue since May 2026).",
+                  file=sys.stderr)
+            print("  ⚠️  [reddit] Skipping reddit scanner — no usable content.",
+                  file=sys.stderr)
+            return []
 
     # Reformat for compatibility with scoring engine
     parsed = []

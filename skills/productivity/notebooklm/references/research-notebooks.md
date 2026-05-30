@@ -11,3 +11,5 @@ Track notable research notebooks created via NotebookLM for easy retrieval.
 - **Key queries run:** (1) Developmental progression, (2) AI as coach/thinking partner, (3) Risks and mitigation, (4) Assignment pathways and artifacts, (5) IB school recommendations
 - **Full document:** `/home/ubuntu/ai-in-education-research.md`
 - **Wiki copy:** `/home/ubuntu/wiki/research/ai-in-education-ib-specialist.md`
+- **Known gaps:** IB's official AI guidance (ibo.org) is Cloudflare-blocked — all sources from ibo.org contain only "Just a moment..." placeholder. Research is based on TeachAI, ISTE, and secondary sources that quote IB guidance. User should download the IB AI & Academic Integrity PDF from their local machine and add it as a source to close this gap.
+- **IB alignment status:** Research aligns with known IB positions (AI not banned, must declare use, must cite, student responsible for accuracy) but lacks direct IB citations. See notebooklm SKILL.md §Alignment Verification Workflow for the recommended approach when primary sources are blocked.

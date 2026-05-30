@@ -10,11 +10,11 @@ TICKERS_CACHE = os.path.join(os.path.dirname(__file__), "..", "data", "tickers_c
 
 # Common false positives — words that look like tickers but aren't
 FALSE_POSITIVES = {
-    "A", "I", "U", "E", "O", "Y", "GO", "TO", "BE", "SO", "WE", "ME", "HE", "NO",
+    "A", "I", "E", "O", "Y", "GO", "TO", "BE", "SO", "WE", "ME", "HE", "NO",
     "OR", "AN", "IT", "AT", "IN", "ON", "IS", "AM", "UP", "DO", "IF", "HI", "OK",
     "DD", "CEO", "CFO", "IPO", "ETF", "API", "AI", "ML", "VR", "AR", "ROI",
     "USD", "GDP", "CPI", "EPS", "PE", "PM", "AM", "YOLO", "LOL", "FOMO",
-    "USA", "UK", "EU", "DD", "IMO", "TLDR", "EDIT", "PS", "OP",
+    "USA", "UK", "EU", "IMO", "TLDR", "EDIT", "PS", "OP",
     "ALL", "CAN", "FOR", "HAS", "NOW", "NEW", "ONE", "OUT", "THE", "TOP",
     "RH", "TD", "WSB", "IRL", "BTFD", "ATH",
 }

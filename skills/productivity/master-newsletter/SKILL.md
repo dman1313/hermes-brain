@@ -28,6 +28,15 @@ Primary owner persona: Clark, Communications Officer.
 5. Keep outputs organized and predictable.
 6. If facts are uncertain, label them and propose verification points.
 
+## Canonical pipeline
+
+This is the editorial/content layer of the newsletter system. For the full end-to-end pipeline including delivery, see the mailchimp-newsletter-pipeline skill.
+
+Division of labor:
+- master-newsletter: editorial (intake, research, drafting, packaging, voice, quality gates)
+- mailchimp-newsletter-pipeline: delivery (Mailchimp, Dropbox, image hosting, campaign management, follow-up)
+- voice-to-newsletter-pipeline: orchestrator (subagent coordination, parallel execution)
+
 ## Supported inputs
 
 ### Route A — Direct input
@@ -240,6 +249,35 @@ Check:
 - Are image placements realistic for an email layout?
 - Is the plain-text version usable?
 
+## Voice profile
+
+Full voice profile lives at: mailchimp-newsletter-pipeline/references/voice-profile.md
+
+Quick reference:
+- Practical, direct, conversational, first person
+- Observation → reflection → conclusion pattern
+- Short paragraphs, varied sentence rhythm
+- Honest uncertainty ("My gut says", "I don't think")
+- No corporate filler, no hype, no AI brochure language
+- Concrete over abstract
+- If it reads like LinkedIn, rewrite it
+
+## Research criteria
+
+Research is conditional. Only research when:
+- Piece makes factual claims that could be wrong
+- Audience might verify a reference
+- One data point would strengthen the piece
+- Topic has common misinformation
+
+Skip research when:
+- Personal reflection or observation
+- Opinion with no factual claims
+- Quick update or announcement
+- Research would dilute the personal voice
+
+When researching: 1-3 facts max, recent sources, integrate naturally, never invent.
+
 ## Human-review rule
 
 Never auto-publish.
@@ -359,12 +397,15 @@ Clark is the communications-officer persona used in stages 1 and 3.
 
 ## Output contract
 
-Unless the user requests a different format, always present the final answer under these headings exactly:
-
-1. Intake Brief
-2. Research Brief
-3. Article Draft
-4. Newsletter Package
+Every newsletter run produces:
+- 3 subject line options (direct, curiosity, emotional)
+- Preview text (40-90 chars)
+- Article draft (markdown)
+- HTML email (600px, inline styles)
+- Plain-text version
+- Image strategy (role, placement, alt text per image)
+- CTA check (present or explicit reason why not)
+- Quality gate results (voice/audience/platform pass/fail)
 
 ## Blog post variant
 

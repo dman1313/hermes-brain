@@ -1,8 +1,8 @@
 ---
 name: hermes-provider-cleanup
 category: hermes
-description: Clean up dead/non-working providers from Hermes after API health checks. Coordinates three-way cleanup across models cache, auth.json credential pools, and config.yaml to leave only working providers configured.
-tags: [hermes, cleanup, providers, configuration, maintenance]
+description: Manage Hermes providers — cleanup dead ones, configure image gen and auxiliary services, and maintain agent profiles in the shared memory vault. Coordinates four-way consistency across models cache, auth.json, config.yaml, and .env.
+tags: [hermes, cleanup, providers, configuration, maintenance, image-generation, agent-memory, self-documentation]
 triggers:
   - "clean up providers"
   - "remove dead models"
@@ -10,11 +10,22 @@ triggers:
   - "remove failed providers"
   - "prune model list"
   - "configure working providers"
+  - "set up image generation"
+  - "configure image gen provider"
+  - "together ai images"
+  - "self-document"
+  - "update agent profile"
+  - "agent memory vault"
 ---
 
 # Hermes Provider Cleanup
 
 Companion to `provider-api-health-check`. After finding which providers work and which don't, this skill handles the actual cleanup — removing dead entries from the models cache, credential pool, and config in a coordinated, consistent way.
+
+## Reference Files
+
+- `references/image-gen-provider-setup.md` — configure image gen plugins (FAL, OpenAI, xAI) and fallback to direct Together API
+- `references/agent-self-documentation.md` — structured workflow for updating agent profiles in the shared memory vault
 
 ## Why This Matters
 
@@ -326,6 +337,21 @@ Sections that commonly reference providers by name:
 
 If a removed provider is still referenced in any of these sections, Hermes will fail silently or throw confusing errors at runtime.
 The models cache (`models_dev_cache.json`) can be stale — the cached model list may be missing models that the API actually serves. After health-checking a provider's `/models` endpoint, update the cache with the fresh model list from the API response rather than keeping the old cached list. Example: Xiaomi's cached list showed 3 models but the API returned 9.
+
+### 9. Credential Values Are Masked in Tool Output
+
+Hermes masks secrets in tool output — any value that looks like an API key renders as `***`. This means you **cannot verify a credential by reading it back** from `grep`, `cat`, or `python3 -c "print(...)"`. The file stores the real value, but you'll only see `***`.
+
+**Workaround — verify by length, not by content:**
+```python
+line = [l for l in open('/home/ubuntu/.hermes/.env') if l.startswith('GNEWS_API_KEY')][0]
+val = line.strip().split('=', 1)[1]
+print(f'Key length: {len(val)} chars, starts with: {val[:4]}...')
+```
+
+If the length matches the expected key format (e.g. 32 hex chars for GNews, 64 for most provider keys), the write succeeded. If it's 4 chars (`***`), the masking leaked into the file and you need to rewrite.
+
+**Pitfall:** Inline `echo >> .env` and `sed -i` can accidentally write the masked placeholder instead of the real value if the shell variable was already masked. Safest approach: write a Python helper script that takes the key as `sys.argv[1]` and writes it directly, bypassing any shell-level masking.
 
 ## Verification
 

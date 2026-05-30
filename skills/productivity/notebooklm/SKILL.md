@@ -198,6 +198,20 @@ When the host has no Chrome (headless VPS), authenticate on a machine with a GUI
 
 Notable research notebooks are tracked in [references/research-notebooks.md](references/research-notebooks.md). Use this to find existing notebooks by topic before creating new ones.
 
+## Alignment Verification Workflow
+
+When the user asks "does this align with X guidelines?" or "is this consistent with Y's official position?", use this workflow instead of brute-force web scraping:
+
+1. **Query the notebook first.** If the research was done in a prior session, the notebook likely already has the answer. Run `nlm notebook query <id> "What does [body] say about [topic]?"` — this is fast and free.
+2. **Try the primary source once.** One attempt at the official URL. If Cloudflare-blocked, don't retry with 10 different approaches.
+3. **Acknowledge the gap honestly.** "The IB's site is Cloudflare-protected and I couldn't access their official guidance directly" is better than 5 minutes of failed attempts.
+4. **Provide the best available answer.** Synthesize from what the notebook contains (secondary sources, TeachAI, ISTE, etc.) and clearly mark what's from primary vs. secondary sources.
+5. **Offer a concrete next step.** Ask the user to download the PDF on their local machine and send it, or suggest they paste the relevant section. This is the fastest path to closing the gap.
+
+**Do NOT:** Spend 10+ tool calls trying Wayback Machine, Google cache, DuckDuckGo, Bing, CachedView, curl with different user-agents, etc. If the first browser attempt shows Cloudflare, move to step 3.
+
+**Pitfall: Institutional sites are Cloudflare-locked.** IBO (ibo.org), OECD, UNESCO, and many .org education sites block automated fetching. This is persistent across sessions — don't expect it to change. The NotebookLM research engine can sometimes access these during its own web search (it uses different infrastructure), so sources added during `nlm research` may have more content than sources added via direct URL.
+
 ## Multi-Query Research Pattern
 
 For comprehensive research sessions (e.g., building a specialist brief), use sequential queries against the same notebook rather than trying to get everything in one question:
@@ -230,6 +244,62 @@ Each query benefits from the growing source base. NotebookLM's retrieval improve
 | Chrome doesn't launch | Port conflict or headless | Use auth transfer approach for headless servers |
 | Auth fails after SCP transfer | Nested directory from trailing slash | See references/auth-scp-transfer.md §4 — mv files up one level |
 | "No sources were found in the research results" | Research engine found nothing (rate limits, query too narrow, or sites blocked) | Manually added sources still work — query the notebook directly. Add more URLs and retry research with a broader query. |
+
+## Fire-and-Forget Pattern for Cron Pipelines
+
+When generating NotebookLM artifacts from cron scripts, **never poll** — the cron timeout (default 120s) is shorter than artifact generation (1-5 min). Use a two-run fire-and-forget pattern instead:
+
+**Run 1 (submit):**
+1. Submit artifacts via `nlm video create`, `nlm slides create`, `nlm report create`
+2. Save state to a JSON file (rank, name, timestamp)
+3. Exit immediately (<30s)
+
+**Run 2+ (check/download):**
+1. Read state file — if submitted, check `nlm studio status`
+2. If artifacts ready → download, mark concept done, delete state file
+3. If not ready → exit silently, try again next run
+
+**State file example** (`pipeline-state.json`):
+```json
+{"rank": 2, "name": "Genetics, Inheritance & GM", "submitted": true}
+```
+
+**Key benefits:**
+- Each run completes in <60s, well within cron timeout
+- Rate-limited submissions (common with slides) get retried naturally on next run
+- No lost work — state persists across runs
+
+**Pitfall: `nlm slides create` is rate-limit-prone.** It fails more often than video or report. In the submit phase, catch the error (`|| true`) and let the download phase handle partial artifacts. The pipeline state tracks concept completion, not individual artifact types.
+
+## Cron-Based Generation: Fire-and-Forget Pattern
+
+When generating NotebookLM artifacts from a cron job, **never poll inside the script**. NotebookLM artifact generation (video, slides, report, flashcards) takes 1-10 minutes. A polling loop (sleep 60 × 10 iterations = 600s) will exceed the cron timeout (120s default) and the job always fails.
+
+**Correct pattern — submit on run N, download on run N+1:**
+
+1. **Run 1 (submit):** Call `nlm video create`, `nlm slides create`, `nlm report create`, `nlm flashcards create` with `--confirm`. Save a state file (e.g. `pipeline-state.json`) with the concept rank and name. Exit immediately.
+
+2. **Run 2+ (check/download):** Read the state file. Call `nlm studio status <notebook> --json`. If artifacts are completed, download them. If not, exit silently — the next hourly run will check again.
+
+3. **Rate limits:** NotebookLM rate-limits slide deck creation. The `|| true` after each create command prevents the script from aborting on rate-limit errors. Slides that fail on submit will succeed on a later run.
+
+**Key implementation details:**
+- Each run completes in <30s (no polling)
+- State file tracks which concept is "in flight"
+- Download filter: `a.get('type') in ('video','slide_deck','report','flashcards')`
+- Use `completed[-4:]` (last 4 artifacts) since each concept submits 4 types
+- Mark concept done only after at least one artifact downloads
+
+## Study Material Generation: Always Include All 4 Types
+
+When generating study materials for a notebook (IGCSE, courses, etc.), **always produce all 4 artifact types**:
+
+1. **Video** — `nlm video create`
+2. **Slides** — `nlm slides create`
+3. **Study Guide** — `nlm report create --format "Study Guide"`
+4. **Flashcards** — `nlm flashcards create`
+
+Do not skip flashcards. They are a standard part of the study material set.
 
 ## Notes
 

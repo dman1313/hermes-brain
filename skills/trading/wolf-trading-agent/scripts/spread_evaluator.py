@@ -352,6 +352,8 @@ def format_spread_suggestions(suggestions: list[dict]) -> str:
         "## 🎯 SPREAD TRADE SUGGESTIONS",
         "_Vertical spreads following the small-account playbook_",
         "",
+        "⚠️ **WARNING: Deltas shown below are ESTIMATED (calculated from percentage moves, not from the actual options chain). Always verify delta, IV, bid-ask spreads, and open interest in your broker platform before entering any trade.**",
+        "",
     ]
 
     for s in suggestions[:5]:  # Top 5 only

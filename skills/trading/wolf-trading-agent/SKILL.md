@@ -53,8 +53,14 @@ python3 ~/.hermes/skills/ragflow/scripts/wolf_ragflow_enhancer.py --scan output/
 ```
 
 ## Architecture
+## Scanners
 
-### Scanners
+### Reddit (⚠️ Broken as of 2026-05)
+
+The DuckDuckGo-based Reddit scanner returns empty post content — titles are just "Link to reddit.com" and selftext is "The site owner hides the web page description." The scanner still returns results but they have no usable text for ticker extraction or sentiment analysis.
+
+**Workaround**: Fetch each post URL with `.json` suffix (`curl <reddit_url>.json -H 'User-Agent: wolf/1.0'`) to get actual post content. Or switch to a different Reddit data source (PRAW, pushshift, etc.).
+
 | Scanner | Backend | Auth Required | Notes |
 |---------|---------|---------------|-------|
 | Reddit | DuckDuckGo `site:reddit.com` | No | Searches r/WSB, r/stocks, r/options, etc. |
@@ -115,6 +121,20 @@ cd ~/.hermes/skills/trading/wolf-trading-agent/scripts
 python3 wolf_newsletter.py --scan /tmp/wolf_scan.json --spreads /tmp/wolf_spreads.json
 ```
 
+## Complementary: Quant Stock Scanner
+
+Wolf finds what people are talking about. The quant scanner (`quant-stock-scanner` skill) scores fundamentals + technicals + options. Run both for a complete picture: Wolf for social discovery, quant scanner for hard numbers.
+
+```bash
+# Quick score check on a Wolf signal
+python3 ~/.hermes/skills/trading/quant-stock-scanner/scripts/quant_scan.py TICKER --score-only
+
+# Full quant report with options
+python3 ~/.hermes/skills/trading/quant-stock-scanner/scripts/quant_scan.py TICKER --options
+```
+
+A ticker appearing in Wolf signals AND scoring >60 on the quant composite is the strongest setup.
+
 ## Files
 
 ```
@@ -130,8 +150,10 @@ scripts/
     └── news_scanner.py       # News via GNews API (free tier, structured JSON)
 references/
 ├── vertical-spread-playbook.md  # Dwayne's small-account spread rules
+├── alpaca-options-chain.md      # Alpaca options API with real Greeks (free tier works)
 ├── google-docs-borderbottom-bug.md  # borderBottom API bug → workaround
-└── massive-api-notes.md  # Massive.com API notes (pending auth setup)
+├── massive-api-notes.md  # Massive.com API notes (pending auth setup)
+└── quant-nn-audit-2026-05-30.md  # Full audit of quant-nn LSTM pipeline (critical issues)
 output/
 └── api_discovery_*.md  # Daily Sherlock endpoint test reports
 ```
@@ -172,15 +194,28 @@ The `--attach-digest` flag injects context footnotes directly into the human-rea
 
 Requires `RAGFLOW_API_URL` + `RAGFLOW_API_KEY` (already in `~/.hermes/.env`). The RAGFlow datasets must finish parsing before the enhancer returns results — if it returns empty context, check parse status with the ragflow-dataset skill.
 
+## Options Volume Scanner (In-Session)
+
+When the user asks for "options plays" or "unusual volume", use the pattern in `references/options-volume-scan.md`. Quick version:
+
+1. Write scanner script to `/tmp/options_volume_scan.py` (never use bash heredoc — `&` breaks)
+2. Scan 20-80 tickers with `time.sleep(2)` between yfinance requests
+3. Filter ATM ±10%, rank by total volume, flag V/OI > 1.5x as unusual
+4. Deep-dive top 8-10 tickers: show top 3 calls/puts per expiration
+
 ## Pitfalls
 
 ### Data Sources
+- **🔴 GNEWS API KEY HARDCODED IN SHELL SCRIPT**: `scripts/wolf_scan_gnews.sh` line 3 has `export GNEWS_API_KEY="ef9382a7b540143cbc64e9a0148b674f"` in plaintext. This key is visible to any process on the system. **ROTATE THIS KEY** and source from environment only. Found in security audit 2026-05-30.
 - **Reddit API changes**: Reddit's JSON API now returns 403 for all unauthenticated requests. Using DuckDuckGo search as backend instead. If DuckDuckGo rate-limits, reduce SEARCH_TERMS per subreddit.
+- **Reddit scanner returns empty post text**: As of 2026-05, DuckDuckGo search results for Reddit return `title: "Link to reddit.com"` and `selftext: "The site owner hides the web page description."` — no actual post content. The scanner still counts mentions from titles/URLs but sentiment analysis gets nothing. Fix: fetch the actual Reddit JSON for each post URL (`curl <url>.json`) to get real content, or switch to a different Reddit data source.
 - **Twitter without xurl**: Gracefully skips Twitter if `xurl` not installed/authenticated. Score still works with Reddit + News alone.
 - **Market hours**: Best run before market open (8 AM ET) on weekdays. Running on weekends produces low-signal results.
-- **GNews API free tier**: 100 requests/day, 12-hour article delay. 14 queries × 5 results = 70 req/scan. Set `GNEWS_API_KEY` env var or pass `--apikey`. Sign up free at gnews.io/register — no credit card.
+- **GNews API free tier**: 100 requests/day, 12-hour article delay. 14 queries × 5 results = 70 req/scan. Set `GNEWS_API_KEY` env var (already in `~/.hermes/.env`, confirmed 2026-05-29) or pass `--apikey`. Sign up free at gnews.io/register — no credit card.
 - **Free news sources that work**: GNews API (primary, free tier, 12h delay). CNBC RSS (`search.cnbc.com/rs/search/combinedcms/view.xml`) and MarketWatch RSS (`feeds.marketwatch.com/marketwatch/topstories`) as fallback. Yahoo Finance RSS returns empty.
-- **Alpaca free tier limits**: Quotes API works fine (unlimited). Minute bars/options return 403 on free tier. Paper trading works for execution.
+- **Alpaca free tier limits**: Quotes API works fine (unlimited). Historical bars work. Minute bars return 403 on free tier. **Options chain with real Greeks works** (confirmed 2026-05-29) — use `OptionChainRequest` for spread evaluation. Paper trading works for execution.
+- **Financial site browser blocking**: Barchart, Yahoo Finance, Finviz, and Unusual Whales all block automated browser access (Cloudfront 403, Cloudflare challenges, rate limits). CBOE market statistics page works (`cboe.com/markets/us/options/market-statistics`). For per-ticker options data, use yfinance directly with sleep delays (see below).
+- **yfinance rate limiting**: Yahoo Finance aggressively rate-limits. When scanning 80+ tickers, add `time.sleep(2)` between requests. At ~20 tickers with 2s delay, yfinance works reliably. Never use bash heredocs for scripts containing `&` — write to a .py file first (the `&` gets interpreted as backgrounding). Always wrap options chain pulls in try/except since some tickers return empty chains.
 
 ### Scoring & Data Quality
 - **Ticker false positives**: The `FALSE_POSITIVES` set in `ticker_extractor.py` filters common words. Add new false positives there.
@@ -189,6 +224,7 @@ Requires `RAGFLOW_API_URL` + `RAGFLOW_API_KEY` (already in `~/.hermes/.env`). Th
 
 ### Spread Evaluator
 - **Spread evaluator needs prices**: Strike suggestions require a current stock price. `spread_evaluator.py` standalone uses hardcoded AAPL/NVDA mocks — it does NOT read scan JSON. Real integration: (1) fetch prices from Alpaca, (2) build signal dicts manually, (3) call `evaluate_signals(signals, prices, iv_regimes)` directly.
+- **Use Alpaca options chain for real Greeks**: Pull options via `OptionChainRequest(underlying_symbol, expiration_date_gte, expiration_date_lte, type)` — returns real delta/gamma/theta/vega and IV. Far better than estimating delta from BSM. Load credentials from `~/alpaca-bot/.env` via dotenv. See `references/alpaca-options-chain.md`.
 - **Credit vs debit**: High IV → credit spreads (short ~30 delta, ~4% OTM). Low IV → debit spreads (long ~60 delta, short ~40 delta). Max loss check: if > 2% of account, tighten to 1.5% width.
 
 ### Google Docs Newsletter

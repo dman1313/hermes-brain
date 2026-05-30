@@ -359,6 +359,10 @@ Edit with `hermes config edit` or `hermes config set section.key value`.
 | `terminal` | `backend` (local/docker/ssh/modal), `cwd`, `timeout` (180) |
 | `compression` | `enabled`, `threshold` (0.50), `target_ratio` (0.20) |
 
+**Token optimization audit:** `references/token-optimization-audit.md` — systematic method for auditing per-turn overhead, tool schema costs, and optimization strategies. Includes the 5 biggest wins ranked by impact.
+
+**Chinese model benchmarks (May 2026):** `references/chinese-model-benchmarks-2026-05.md` — live benchmark scores (SWE-bench, DeepSWE, LiveBench, τ³-bench), pricing, subscription plans, and routing recommendations for MiMo, Kimi, GLM, and DeepSeek. Key finding: DeepSWE (contamination-free) reveals SWE-bench scores are inflated — DeepSeek V4 Pro drops from 80.6% to 8%.
+
 **Compression threshold pitfall:** if your compression model (under `auxiliary.compression`) has a smaller context window than your main model, the threshold must be lowered or compression will fail silently. Example: main model has 500K context, compression model has 200K context — threshold 0.50 means compressing at 250K tokens, which exceeds the compression model's limit. Fix with `hermes config set compression.threshold 0.35`. The system auto-lowers the threshold in-session to match the compression model's limit, but this is temporary. Make it permanent to silence the warning.
 | `display` | `skin`, `tool_progress`, `show_reasoning`, `show_cost` |
 | `stt` | `enabled`, `provider` (local/groq/openai/mistral) |
