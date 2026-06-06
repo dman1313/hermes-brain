@@ -914,6 +914,8 @@ assets:                     # image URLs exposed as --theme-asset-* vars
   hero: "url(...)"
 ```
 
+**Kanban DOM selectors for CSS:** `references/kanban-dom-selectors.md` — complete class name reference for writing `customCSS` that targets kanban columns, cards, dots, badges, and empty states. Use these exact names; do not guess.
+
 **Key pitfalls:**
 - palette midground is the PRIMARY text/accent color — for light themes, set it to a dark text color (#2d2926); for dark themes, a cream (#ffe6cb)
 - palette foreground with alpha 0 drives ring/glow accents

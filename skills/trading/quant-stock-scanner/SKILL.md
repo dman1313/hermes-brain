@@ -33,7 +33,7 @@ python3 ~/.hermes/skills/trading/quant-stock-scanner/scripts/quant_scan.py AAPL 
 
 When a user asks for a "quant scan" on a ticker:
 
-1. **Pull OHLCV + fundamentals** via yfinance (6mo daily data). **Use Alpaca for real-time price** (`StockLatestTradeRequest` from `~/alpaca-bot/.env`) — yfinance prices are unreliable under rate limits.
+1. **Pull OHLCV + fundamentals** via yfinance (6mo daily data). **If yfinance raises YFRateLimitError**, use Nasdaq API fallback for current price + fundamentals (P/E, EPS, Market Cap, 52W range) — see `references/nasdaq-api-fallback.md`. **Use Alpaca for real-time price** (`StockLatestTradeRequest` from `~/alpaca-bot/.env`) — yfinance prices are unreliable under rate limits.
 2. **Calculate technicals**: SMA(20/50/200), EMA(12/26), RSI(14), MACD(12,26,9), Bollinger(20,2), ATR(14), volume ratios, price changes (1D/5D/20D/60D), 52W range positioning
 3. **Extract fundamentals**: P/E (trailing + forward), P/S, P/B, EV/EBITDA, revenue growth, margins (gross/op/profit), ROE, debt/equity, current ratio, FCF, cash position
 4. **Scrape news** from MarketWatch, Yahoo Finance, or TipRanks (use bulk_get or fetch)
@@ -107,6 +107,20 @@ Apply the vertical spread playbook from wolf-trading-agent when evaluating:
 - Low IV → debit spreads favored
 - Max loss check: >2% of account → tighten to 1.5% width
 
+**For actual spread construction with real bid/ask data**, see `references/options-spread-construction.md`. Covers REST API parsing, OCC symbol decoding, spread math, and presentation format.
+
+### Relative Strength Screening
+
+When the user wants "quant action" or trade ideas across multiple names:
+
+1. Get stock snapshots for 50+ tickers via Alpaca REST API
+2. Sort by % change
+3. Identify names that are **GREEN while sector is RED** — these are the best spread candidates
+4. Run options chain analysis on top 3-5 relative strength names
+5. Present 2-4 spread setups with real bid/ask, RoR, breakeven
+
+**Why relative strength works**: Stocks that hold up during sector-wide selling have institutional buyers. The spread gives defined-risk exposure to that thesis.
+
 ## Presentation Format
 
 Structure the report in this order:
@@ -126,6 +140,7 @@ Keep it data-dense. No fluff. Dwayne prefers bullet points over paragraphs.
 ## Pitfalls
 
 ### yfinance / Python
+- **quant_scan.py crashes on YFRateLimitError** with no fallback — it calls `t.info` which raises an unhandled exception. When this happens, use the Nasdaq API or Alpaca fallback pattern manually (see `references/nasdaq-api-fallback.md`).
 - **yfinance is UNRELIABLE for real-time prices** — returns stale/cached data during rate limits (which happen frequently). User confirmed "price data is way off" (2026-05-29). **Use Alpaca for real-time prices** (`StockLatestTradeRequest`), keep yfinance for fundamentals only.
 - **yfinance options chain hits rate limits** — `t.options` and `t.option_chain()` throw `YFRateLimitError` frequently. Use Alpaca's `OptionChainRequest` instead — returns real Greeks and IV on free tier. See `references/alpaca-data-setup.md` or wolf-trading-agent `references/alpaca-options-chain.md`.
 - **For quick ticker identification** — use Nasdaq API (`api.nasdaq.com/api/quote/TICKER/info?assetclass=stocks`), no auth needed. Returns company name, exchange, real-time price, 52W range. Faster than yfinance for lookups.
@@ -144,6 +159,7 @@ Keep it data-dense. No fluff. Dwayne prefers bullet points over paragraphs.
 - yfinance options chain may be empty for small-cap tickers.
 - IV on weeklies can be 200-300%+ — always note this is a volatility premium, not a directional signal.
 - Check bid-ask spread — if spread > 30% of midprice, the option is illiquid. Warn the user.
+- **Alpaca REST API: `details.expiration_date` is EMPTY** — must parse OCC symbol for expiry, type, and strike. See `references/options-spread-construction.md` for the correct parsing code.
 
 ### Scoring Model
 - The model is calibrated for US-listed equities. REITs, MLPs, and financial companies with unusual capital structures may score oddly on the quality factor.
@@ -156,8 +172,10 @@ Keep it data-dense. No fluff. Dwayne prefers bullet points over paragraphs.
 scripts/
   quant_scan.py    # Full quant scan: technicals + fundamentals + composite score
 references/
-  scoring-model.md # Detailed scoring rubric with edge cases
-  alpaca-data-setup.md  # Alpaca real-time prices + options chain setup
+  scoring-model.md              # Detailed scoring rubric with edge cases
+  alpaca-data-setup.md          # Alpaca real-time prices + options chain setup
+  nasdaq-api-fallback.md        # Nasdaq public API as yfinance fallback (price + P/E + EPS + 52W range, no auth)
+  options-spread-construction.md # Vertical spread construction with real bid/ask, REST API patterns, OCC parsing, presentation format
 ```
 
 ## Verification

@@ -158,6 +158,24 @@ colorOverrides:
 - Muted text at `#78716c` or darker (NOT light `#a39e96`)
 - Green used ONLY for buttons/accent elements, never for body text
 
+## Kanban CSS Targeting
+
+The kanban board uses `hermes-kanban-*` prefixed classes. Full DOM selector
+reference: `references/kanban-dom-selectors.md`. Key classes:
+
+- `.hermes-kanban-column` — column wrapper (use `:nth-child(N)` for per-column styling)
+- `.hermes-kanban-column-header` — header with dot, label, count
+- `.hermes-kanban-column-sub` — column description text
+- `.hermes-kanban-card` — task card (a `<button>`, not a `<div>`)
+- `.hermes-kanban-card-title` — task title
+- `.hermes-kanban-assignee` — assignee badge
+- `.hermes-kanban-priority` — priority badge (has inline styles, use `!important`)
+- `.hermes-kanban-dot-*` — status dots per column type
+
+**Pitfall:** Priority badges have inline `background-color` and `color`. Use
+`!important` to override. Progress rings are SVG `<circle>` elements — target
+`stroke` properties, not `background`.
+
 ## Built-in Theme Names
 
 `default`, `default-large`, `midnight`, `ember`, `mono`, `cyberpunk`, `rose`

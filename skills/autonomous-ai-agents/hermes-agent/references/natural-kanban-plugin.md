@@ -100,22 +100,31 @@ if (card.dataset.enhanced) return;               // already enhanced
 
 ## CSS targeting
 
-The kanban board uses these CSS classes:
+Complete kanban DOM selector reference: `references/kanban-dom-selectors.md`.
+
+Key classes used by the plugin:
 - `.hermes-kanban` — board root
 - `.hermes-kanban-columns` — columns grid
-- `.hermes-kanban-column` — single column
+- `.hermes-kanban-column` — single column (use `:nth-child(N)` for per-column)
 - `.hermes-kanban-column-header` — column title
 - `.hermes-kanban-column-label` — column name text
+- `.hermes-kanban-column-sub` — column description
 - `.hermes-kanban-column-count` — count badge
-- `.hermes-kanban-card` — card wrapper
+- `.hermes-kanban-card` — card wrapper (`<button>`, not `<div>`)
 - `.hermes-kanban-card-content` — card inner (use this for styling)
 - `.hermes-kanban-card-id` — task ID span
 - `.hermes-kanban-card-title` — title span
-- `.hermes-kanban-priority` — priority badge
-- `.hermes-kanban-tag` — type badge
-- `.hermes-kanban-progress` — progress pill ("N/M")
+- `.hermes-kanban-assignee` — assignee badge
+- `.hermes-kanban-unassigned` — unassigned label
+- `.hermes-kanban-priority` — priority badge (has inline styles, use `!important`)
+- `.hermes-kanban-progress` — progress ring wrapper (SVG inside)
+- `.hermes-kanban-count` — dependency/comment count
+- `.hermes-kanban-ago` — age timestamp
 - `.hermes-kanban-empty` — empty column placeholder
-- `.hermes-kanban-dot-{status}` — status color dots
+- `.kanban-empty` — alternate empty state
+- `.hermes-kanban-dot-{status}` — status color dots (triage/todo/ready/running/blocked/done)
+- `.hermes-kanban-card--stale-amber` — overdue card modifier
+- `.hermes-kanban-card--stale-red` — very overdue card modifier
 
 ## Force dashboard to discover the plugin
 

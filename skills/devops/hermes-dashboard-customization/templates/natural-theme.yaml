@@ -1,0 +1,68 @@
+name: natural
+label: Natural
+description: Clean white workspace with forest green accents. Dark readable text, generous spacing.
+
+palette:
+  background:
+    hex: "#ffffff"
+    alpha: 1.0
+  midground:
+    hex: "#1a1816"
+    alpha: 1.0
+  foreground:
+    hex: "#ffffff"
+    alpha: 0.0
+  warmGlow: "rgba(193, 127, 89, 0.12)"
+  noiseOpacity: 0.15
+
+typography:
+  fontSans: "Inter, system-ui, sans-serif"
+  fontMono: "JetBrains Mono, ui-monospace, monospace"
+  fontDisplay: "Inter, system-ui, sans-serif"
+  fontUrl: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
+  baseSize: "15px"
+  lineHeight: "1.55"
+  letterSpacing: "0"
+
+layout:
+  radius: "0.75rem"
+  density: comfortable
+
+colorOverrides:
+  primary: "#3d7a4f"
+  primaryForeground: "#ffffff"
+  secondary: "#f5f3ef"
+  secondaryForeground: "#1a1816"
+  muted: "#f0ece6"
+  mutedForeground: "#6b6560"
+  accent: "#3d7a4f"
+  accentForeground: "#ffffff"
+  destructive: "#c47d7d"
+  destructiveForeground: "#ffffff"
+  success: "#3d7a4f"
+  warning: "#d4a843"
+  border: "#e2ddd5"
+  input: "#e2ddd5"
+  ring: "#3d7a4f"
+  card: "#ffffff"
+  cardForeground: "#1a1816"
+  popover: "#ffffff"
+  popoverForeground: "#1a1816"
+
+componentStyles:
+  card:
+    boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)"
+    borderRadius: "12px"
+  header:
+    background: "rgba(255,255,255,0.85)"
+    backdropFilter: "blur(20px)"
+    borderBottom: "1px solid #e2ddd5"
+  sidebar:
+    background: "rgba(255,255,255,0.9)"
+    backdropFilter: "blur(16px)"
+    borderRight: "1px solid #e2ddd5"
+  badge:
+    borderRadius: "6px"
+  progress:
+    color: "#3d7a4f"
+    background: "#e2ddd5"

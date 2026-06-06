@@ -245,6 +245,19 @@
     "use_count": 14,
     "view_count": 14
   },
+  "kanban-worker": {
+    "archived_at": null,
+    "created_at": "2026-06-02T10:38:54.795143+00:00",
+    "created_by": null,
+    "last_patched_at": null,
+    "last_used_at": "2026-06-02T10:42:52.669328+00:00",
+    "last_viewed_at": null,
+    "patch_count": 0,
+    "pinned": false,
+    "state": "active",
+    "use_count": 5,
+    "view_count": 0
+  },
   "kimi-cli": {
     "archived_at": null,
     "created_at": "2026-05-10T14:27:45.460288+00:00",
@@ -325,13 +338,13 @@
     "created_at": "2026-05-08T17:24:32.635908+00:00",
     "created_by": null,
     "last_patched_at": null,
-    "last_used_at": "2026-05-08T17:24:32.643489+00:00",
-    "last_viewed_at": "2026-05-08T17:24:32.635963+00:00",
+    "last_used_at": "2026-06-02T10:39:05.550059+00:00",
+    "last_viewed_at": "2026-06-02T10:39:05.546967+00:00",
     "patch_count": 0,
     "pinned": false,
     "state": "active",
-    "use_count": 1,
-    "view_count": 1
+    "use_count": 2,
+    "view_count": 2
   },
   "openclaw-gateway-setup": {
     "archived_at": null,

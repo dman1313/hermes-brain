@@ -99,6 +99,112 @@ Or use the hermetic venv directly:
   /home/ubuntu/scripts/hermes-backup.py
 ```
 
+## Procedure: Full Manual Offline Backup (for migration / major update)
+
+Run THIS before system updates, Hermes version upgrades, or server migration.
+Creates a complete portable snapshot including source, state, secrets, and
+agent-memory — with a RESTORE guide embedded.
+
+### Step 1 — Create backup directory
+
+```bash
+BACKUP_DATE=$(date +%F)
+mkdir -p ~/backups/$BACKUP_DATE
+```
+
+### Step 2 — Dump cron job definitions
+
+```bash
+cp ~/.hermes/cron/jobs.json ~/backups/$BACKUP_DATE/cron-jobs-export.json
+```
+
+### Step 3 — Build tarballs (split by sensitivity)
+
+| Tarball | What's inside | Size |
+|---------|---------------|------|
+| `hermes-config-and-state.tar.gz` | config.yaml, .env, skills/, plugins/, cron/, sessions/, checkpoints/, profiles/, SOUL.md, AGENTS.md, MEMORY.md | ~130 MB |
+| `hermes-source.tar.gz` | hermes-agent/ source (exclude node_modules, __pycache__, .venv, dist, .next) | ~500 MB |
+| `state-snapshots.tar.gz` | ~/.hermes/state-snapshots/ | ~200 MB |
+| `agent-memory.tar.gz` | ~/agent-memory/ vault | ~500 KB |
+| `scripts-and-extras.tar.gz` | ~/scripts/, ~/hermes-brain/, dashboard-auth-proxy.py | ~20 MB |
+
+```bash
+cd ~
+# Config + state (includes .env)
+tar czf backups/$BACKUP_DATE/hermes-config-and-state.tar.gz \
+  .hermes/config.yaml \
+  .hermes/.env \
+  .hermes/skills/ \
+  .hermes/scripts/ \
+  .hermes/plugins/ \
+  .hermes/obsidian_workspace/ \
+  .hermes/cron/ \
+  .hermes/sessions/ \
+  .hermes/checkpoints/ \
+  .hermes/data/ \
+  .hermes/kanban/ \
+  .hermes/profiles/ \
+  .hermes/state-snapshots/ \
+  SOUL.md AGENTS.md CLAUDE.md USER.md HEARTBEAT.md MEMORY.md
+
+# Source (without deps)
+tar czf backups/$BACKUP_DATE/hermes-source.tar.gz \
+  --exclude='node_modules' \
+  --exclude='.next' \
+  --exclude='dist' \
+  --exclude='__pycache__' \
+  --exclude='.venv' \
+  --exclude='venv' \
+  .hermes/hermes-agent/
+
+# Agent memory
+tar czf backups/$BACKUP_DATE/agent-memory.tar.gz agent-memory/
+
+# Scripts and extras
+tar czf backups/$BACKUP_DATE/scripts-and-extras.tar.gz \
+  scripts/ .hermes/scripts/ hermes-brain/ dashboard-auth-proxy.py
+```
+
+### Step 4 — Write migration guide
+
+Create a `RESTORE.md` inside the backup directory covering:
+- Prerequisites (OS, Python, Node versions)
+- Step-by-step install of fresh Hermes
+- Restore of config, .env, skills from tarballs
+- Cron job re-import from `cron-jobs-export.json`
+- Agent-memory Git re-sync
+- Service setup (Cloudflare tunnel, systemd, Caddy)
+- Re-auth checklist (Google Workspace, X/Twitter, GitHub)
+- File sizes and what each tarball contains
+
+### Step 5 — Upload to Drive
+
+```bash
+HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
+GWORK="$HERMES_HOME/skills/productivity/google-workspace"
+PY="$HERMES_HOME/hermes-agent/venv/bin/python"
+GAPI="$PY $GWORK/scripts/google_api.py"
+
+cd ~/backups/$BACKUP_DATE
+$GAPI drive upload <file> --name "hermes-full-backup-$BACKUP_DATE-<component>.tar.gz"
+```
+
+Upload each tarball individually (smaller files first). The Google Drive
+API wrapper's `upload` command creates a new file or replaces an existing
+one with the same name.
+
+### Step 6 — Prune old backups
+
+```bash
+$GAPI drive delete "hermes-backup-" --keep 7
+```
+
+### Step 7 — Clean local files
+
+```bash
+rm -rf ~/backups/$BACKUP_DATE/   # optional — only when cache space is needed
+```
+
 ## Procedure: Run Dropbox Backup Manually
 
 ```bash

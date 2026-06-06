@@ -158,6 +158,8 @@ Reusable prompts for: General Investigation, Option Comparison, Skill Audit, Spi
 
 ## Research Depth Standard
 
+**GitHub domain research:** See `references/github-topic-research.md` for patterns — topic pages are often near-empty; combine with awesome-lists, curated articles, and broad topic tags.
+
 Minimum source counts per mode:
 
 - Quick Recon — Minimum 2 credible sources

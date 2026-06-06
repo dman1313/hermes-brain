@@ -8,7 +8,7 @@ platforms: [linux, macos, windows]
 metadata:
   hermes:
     tags: [skills, authoring, hermes-agent, conventions, skill-md]
-    related_skills: [writing-plans, requesting-code-review]
+    related_skills: [plan, requesting-code-review]
 ---
 
 # Authoring Hermes-Agent Skills (in-repo)
@@ -151,6 +151,22 @@ Pick the closest existing category. Don't invent new top-level categories casual
 6. **Expecting the current session to see the new skill.** It won't. The skill loader is initialized at session start. Verify in a fresh session or via `skill_view` using the exact path.
 
 7. **Linking to skills that don't exist in-repo.** `related_skills: [some-user-local-skill]` works for you but breaks for other clones. Prefer only in-repo links.
+
+## When to Add Scripts
+
+Add utility scripts when:
+- Operation is deterministic (validation, formatting)
+- Same code would be generated repeatedly
+- Errors need explicit handling
+
+Scripts save tokens and improve reliability vs generated code.
+
+## When to Split Files
+
+Split into separate files when:
+- SKILL.md exceeds 100 lines
+- Content has distinct domains (finance vs sales schemas)
+- Advanced features are rarely needed
 
 ## Verification Checklist
 

@@ -29,6 +29,18 @@ KeyError: 'content'
 ### May 29 DREAM Manual Run (2 errors)
 Same pattern — called `read_file` on `jobs.json` which had been read earlier in the conversation. Got `KeyError: 'content'` twice before switching to `terminal` with heredoc.
 
+### May 30 DREAM Cron (5 errors)
+```
+[2026-05-30 03:04:30] execute_code returned error: KeyError: 'content'
+[2026-05-30 03:04:50] execute_code returned error: KeyError: 'content'
+[2026-05-30 03:04:57] execute_code returned error: KeyError: 'content'
+[2026-05-30 03:05:08] execute_code returned error: (split on None)
+```
+All from DREAM cron `28bd7873af01`. The model generating DREAM's code still uses `result['content']` despite this being documented. **Total across 3 nights: 10 errors, same fix needed.**
+
+## Why This Keeps Recurring
+The model generating DREAM's `execute_code` blocks treats `read_file` as a normal file-reading function and assumes `result['content']` contains the file text. The skill documentation exists but the model doesn't follow it during code generation. The fix must be enforced at the code-generation level: **never use `read_file` inside `execute_code`**.
+
 ## Working Pattern
 ```python
 # CORRECT: Use terminal with heredoc for file reading in execute_code

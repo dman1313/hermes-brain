@@ -25,6 +25,8 @@ Gmail, Calendar, Drive, Contacts, Sheets, Docs, and Slides — all through Pytho
 - `references/gmail-search-syntax.md` — Gmail search operators (is:unread, from:, newer_than:, etc.)
 - `references/hermes-drive-backup.md` — Hermes state backup workflow to Google Drive (script, cron, retention)
 - `references/google-slides-api.md` — Slides API patterns, pitfalls, helper functions, and the `fields` footgun
+- `references/drive-folder-operations.md` — Create folders, move files, delete via standalone Drive API scripts (not in google_api.py)
+- `references/drive-management-operations.md` — Drive operations not in google_api.py: create folders, move files, bulk reorganize (standalone script pattern)
 
 ## Scripts
 

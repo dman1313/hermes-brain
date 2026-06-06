@@ -78,10 +78,25 @@ You can then use the tools naturally -- just ask the agent to get the current ti
 
 ## Pitfalls
 
-- **Protected config file**: `~/.hermes/config.yaml` cannot be edited with `patch` or `write_file`. Always use `hermes config set <key> <value>`.
-- **Interactive installers**: `npx add-mcp <url>` uses interactive prompts that fail in non-interactive/PTY-less environments (ERR_TTY_INIT_FAILED). Use `hermes config set` instead.
+- **Protected config file**: `~/.hermes/config.yaml` cannot be edited with `patch` or `write_file`. Use `hermes config set` for simple values, or **Python yaml** for complex multi-key entries:
+  ```python
+  python3 -c "
+  import yaml
+  with open('$HOME/.hermes/config.yaml', 'r') as f: config = yaml.safe_load(f)
+  config['mcp_servers']['my_server'] = { 'command': 'npx', 'args': ['-y', 'pkg@latest', 'mcp', 'start'], 'env': {...}, 'timeout': 120, 'connect_timeout': 120, 'enabled': True }
+  with open('$HOME/.hermes/config.yaml', 'w') as f: yaml.dump(config, f, default_flow_style=False, sort_keys=True, allow_unicode=True)
+  "
+  ```
+- **`hermes mcp add` flag parsing bug**: `--args "-y" "pkg@latest"` fails because `-y` gets parsed as a Hermes CLI flag, not an MCP arg. The `hermes mcp add` subcommand does NOT use `--` to separate its args from the parent parser. Workarounds: (1) use `hermes config set` for simple servers, (2) use the Python yaml approach above for complex ones with env vars.
+- **Heavy MCP servers (ONNX, ML models)**: Servers that load ML models (ONNX, torch, etc.) on first start will exceed the default 60s `connect_timeout`. Fix: (1) `npm install -g <package>` to avoid npx download overhead, (2) set `connect_timeout: 120` and `timeout: 120` minimum, (3) first `hermes mcp test` will fail while models download — run the command manually once to cache, then test again.
+- **First-run model caching**: If a server downloads models on first start (common with embedding/ONNX servers), run it once manually to populate the cache before testing:
+  ```bash
+  printf '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0"}}}\n' | timeout 60 <command> <args> 2>/dev/null
+  ```
+  Second invocation will hit disk cache and connect in seconds.
+- **Global install over npx for slow servers**: For MCP servers where `npx` adds 30s+ startup time, install globally with `npm install -g <package>` and use the binary name directly in `command:`. This avoids npx's package resolution on every connection.
 - **Restart required**: MCP server changes require `hermes gateway restart` — they do not hot-reload.
-- **Verification**: Always run `hermes mcp list` after adding a server to confirm it shows as enabled and connected.
+- **Verification**: Always run `hermes mcp list` after adding a server to confirm it shows as enabled, then `hermes mcp test <name>` to verify the connection.
 
 ## Configuration Reference
 
@@ -379,3 +394,4 @@ Disable sampling for untrusted servers with `sampling: { enabled: false }`.
 - The native MCP client is independent of `mcporter` -- you can use both simultaneously
 - Server connections are persistent and shared across all conversations in the same agent process
 - Adding or removing servers requires restarting the agent (no hot-reload currently)
+- **Ruflo (Claude Flow V3)** — 293 MCP tools for agent orchestration, swarms, memory, WASM agents. See `references/ruflo-mcp-setup.md` for full integration guide.

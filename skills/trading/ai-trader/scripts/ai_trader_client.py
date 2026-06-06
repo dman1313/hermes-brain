@@ -437,8 +437,8 @@ class ApiClient:
             ApiError: On other API errors.
         """
         if not bypass_checks:
-            # Market hours check (US stocks only)
-            if market == "us-stock":
+            # Market hours check (US stocks only — skip for simulated trades)
+            if market == "us-stock" and price > 0:
                 open_flag, reason = is_market_open()
                 if not open_flag:
                     raise MarketClosedError(reason or "US markets are closed")
@@ -574,7 +574,21 @@ class ApiClient:
         portfolio_value = 0.0
         try:
             cash = float(agent.get("cash", 0))
-            pos_value = sum(float(p.get("value", 0)) for p in positions)
+            pos_value = 0.0
+            for p in positions:
+                # Try value field first, fall back to quantity * current_price
+                val = p.get("value")
+                if val and float(val) > 0:
+                    pos_value += float(val)
+                else:
+                    qty = float(p.get("quantity", 0) or 0)
+                    price = float(p.get("current_price", 0) or 0)
+                    if qty > 0 and price > 0:
+                        pos_value += qty * price
+                    else:
+                        price = float(p.get("entry_price", 0) or 0)
+                        if qty > 0 and price > 0:
+                            pos_value += qty * price
             portfolio_value = cash + pos_value
         except (ValueError, TypeError):
             pass
@@ -589,6 +603,248 @@ class ApiClient:
             "positions_count": len(positions),
             "portfolio_value": portfolio_value,
         }
+
+    # ------------------------------------------------------------------
+    # Strategy & Discussion signals
+    # ------------------------------------------------------------------
+
+    def publish_strategy(
+        self,
+        market: str,
+        title: str,
+        content: str,
+        symbols: Optional[List[str]] = None,
+        tags: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """Publish a strategy signal.
+
+        Args:
+            market: Market (us-stock, crypto, polymarket).
+            title: Strategy title.
+            content: Strategy content/thesis.
+            symbols: List of symbols this strategy covers.
+            tags: List of tags.
+
+        Returns:
+            API response dict.
+        """
+        payload: Dict[str, Any] = {
+            "market": market,
+            "title": title,
+            "content": content,
+        }
+        if symbols:
+            payload["symbols"] = ",".join(symbols) if isinstance(symbols, list) else symbols
+        if tags:
+            payload["tags"] = ",".join(tags) if isinstance(tags, list) else tags
+
+        resp = self._request("POST", "/signals/strategy", json=payload)
+        data: Dict[str, Any] = resp.json()
+        logger.info("Strategy published: %s", title)
+        _write_audit({
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "type": "strategy",
+            "title": title,
+            "market": market,
+            "symbols": symbols,
+        })
+        return data
+
+    def publish_discussion(
+        self,
+        title: str,
+        content: str,
+        tags: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """Publish a discussion signal.
+
+        Args:
+            title: Discussion title.
+            content: Discussion content.
+            tags: List of tags.
+
+        Returns:
+            API response dict.
+        """
+        payload: Dict[str, Any] = {
+            "title": title,
+            "content": content,
+        }
+        if tags:
+            payload["tags"] = tags
+
+        resp = self._request("POST", "/signals/discussion", json=payload)
+        data: Dict[str, Any] = resp.json()
+        logger.info("Discussion published: %s", title)
+        _write_audit({
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "type": "discussion",
+            "title": title,
+        })
+        return data
+
+    def reply_to_signal(
+        self,
+        signal_id: int,
+        content: str,
+        user_name: str = "Hermes_Dwayne_Primeau",
+    ) -> Dict[str, Any]:
+        """Reply to a signal.
+
+        Args:
+            signal_id: The signal to reply to.
+            content: Reply content.
+            user_name: Display name.
+
+        Returns:
+            API response dict.
+        """
+        resp = self._request("POST", "/signals/reply", json={
+            "signal_id": signal_id,
+            "user_name": user_name,
+            "content": content,
+        })
+        data: Dict[str, Any] = resp.json()
+        logger.info("Replied to signal %d", signal_id)
+        return data
+
+    # ------------------------------------------------------------------
+    # Feed browsing
+    # ------------------------------------------------------------------
+
+    def get_feed(
+        self,
+        limit: int = 10,
+        message_type: Optional[str] = None,
+        symbol: Optional[str] = None,
+        keyword: Optional[str] = None,
+        sort: str = "new",
+    ) -> List[Dict[str, Any]]:
+        """Browse the signal feed.
+
+        Args:
+            limit: Max signals to return.
+            message_type: Filter by type (realtime, strategy, discussion).
+            symbol: Filter by symbol.
+            keyword: Search keyword.
+            sort: Sort order (new, active, following).
+
+        Returns:
+            List of signal dicts.
+        """
+        params: Dict[str, Any] = {"limit": limit, "sort": sort}
+        if message_type:
+            params["message_type"] = message_type
+        if symbol:
+            params["symbol"] = symbol
+        if keyword:
+            params["keyword"] = keyword
+
+        resp = self._request("GET", "/signals/feed", params=params)
+        data = resp.json()
+        if isinstance(data, dict):
+            data = data.get("signals", data.get("data", []))
+        logger.info("Feed returned %d signals", len(data) if isinstance(data, list) else 0)
+        return data if isinstance(data, list) else []
+
+    # ------------------------------------------------------------------
+    # Rebalance analysis
+    # ------------------------------------------------------------------
+
+    def analyze_positions(self) -> Dict[str, Any]:
+        """Analyze current positions for rebalancing opportunities.
+
+        Returns:
+            Dict with winners, losers, concentration risk, and suggestions.
+        """
+        positions = self.get_positions()
+        if not positions:
+            return {"error": "No positions to analyze"}
+
+        total_value = 0.0
+        position_details = []
+
+        for pos in positions:
+            symbol = pos.get("symbol", "?")
+            qty = float(pos.get("quantity", 0) or 0)
+            entry = float(pos.get("entry_price", 0) or 0)
+            current = float(pos.get("current_price", 0) or 0)
+            value = float(pos.get("value", 0) or 0)
+
+            if value == 0 and qty > 0 and current > 0:
+                value = qty * current
+            if value == 0 and qty > 0 and entry > 0:
+                value = qty * entry
+
+            pnl_pct = ((current - entry) / entry * 100) if entry > 0 else 0
+            total_value += value
+
+            position_details.append({
+                "symbol": symbol,
+                "quantity": qty,
+                "entry": entry,
+                "current": current,
+                "value": value,
+                "pnl_pct": round(pnl_pct, 2),
+                "market": pos.get("market", "unknown"),
+            })
+
+        # Sort by P&L
+        winners = sorted([p for p in position_details if p["pnl_pct"] > 0],
+                        key=lambda x: x["pnl_pct"], reverse=True)
+        losers = sorted([p for p in position_details if p["pnl_pct"] < 0],
+                       key=lambda x: x["pnl_pct"])
+
+        # Concentration analysis
+        concentration = []
+        for p in position_details:
+            pct = (p["value"] / total_value * 100) if total_value > 0 else 0
+            p["weight_pct"] = round(pct, 1)
+            if pct > 15:
+                concentration.append(f"⚠️ {p['symbol']}: {pct:.1f}% (over-concentrated)")
+
+        return {
+            "total_positions": len(positions),
+            "total_value": round(total_value, 2),
+            "winners": winners,
+            "losers": losers,
+            "concentration_warnings": concentration,
+            "suggestions": self._generate_suggestions(position_details, total_value),
+        }
+
+    def _generate_suggestions(
+        self, positions: List[Dict[str, Any]], total_value: float
+    ) -> List[str]:
+        """Generate rebalance suggestions based on position analysis."""
+        suggestions = []
+
+        losers = [p for p in positions if p["pnl_pct"] < -5]
+        if losers:
+            syms = ", ".join(f"{p['symbol']} ({p['pnl_pct']}%)" for p in losers[:3])
+            suggestions.append(f"Consider cutting losers: {syms}")
+
+        winners = [p for p in positions if p["pnl_pct"] > 3]
+        if winners:
+            syms = ", ".join(f"{p['symbol']} (+{p['pnl_pct']}%)" for p in winners[:3])
+            suggestions.append(f"Consider taking profits on: {syms}")
+
+        over_weight = [p for p in positions if p.get("weight_pct", 0) > 15]
+        if over_weight:
+            syms = ", ".join(f"{p['symbol']} ({p['weight_pct']}%)" for p in over_weight)
+            suggestions.append(f"Reduce concentration: {syms}")
+
+        # Check sector/market balance
+        crypto = [p for p in positions if p["market"] == "crypto"]
+        stocks = [p for p in positions if p["market"] == "us-stock"]
+        if len(crypto) > 0 and len(stocks) > 0:
+            crypto_val = sum(p["value"] for p in crypto)
+            stock_val = sum(p["value"] for p in stocks)
+            if total_value > 0:
+                crypto_pct = crypto_val / total_value * 100
+                if crypto_pct > 30:
+                    suggestions.append(f"Crypto exposure high at {crypto_pct:.0f}% — consider trimming")
+
+        return suggestions
 
     # ------------------------------------------------------------------
     # Follow trader
@@ -776,6 +1032,106 @@ def _cmd_heartbeat(args: argparse.Namespace) -> None:
     print(json.dumps(result, indent=2, default=str))
 
 
+def _cmd_strategy(args: argparse.Namespace) -> None:
+    """Handle the 'strategy' CLI command."""
+    client = ApiClient()
+    symbols = args.symbols.split(",") if args.symbols else None
+    tags = args.tags.split(",") if args.tags else None
+    try:
+        result = client.publish_strategy(
+            market=args.market,
+            title=args.title,
+            content=args.content,
+            symbols=symbols,
+            tags=tags,
+        )
+        print(json.dumps(result, indent=2, default=str))
+    except AiTraderError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+
+def _cmd_discussion(args: argparse.Namespace) -> None:
+    """Handle the 'discussion' CLI command."""
+    client = ApiClient()
+    tags = args.tags.split(",") if args.tags else None
+    try:
+        result = client.publish_discussion(
+            title=args.title,
+            content=args.content,
+            tags=tags,
+        )
+        print(json.dumps(result, indent=2, default=str))
+    except AiTraderError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+
+def _cmd_feed(args: argparse.Namespace) -> None:
+    """Handle the 'feed' CLI command."""
+    client = ApiClient()
+    try:
+        signals = client.get_feed(
+            limit=args.limit,
+            message_type=args.type,
+            symbol=args.symbol,
+            keyword=args.keyword,
+            sort=args.sort,
+        )
+        if not signals:
+            print("No signals found.")
+            return
+        for s in signals:
+            stype = str(s.get("message_type", s.get("type", "?")) or "?")
+            title = str(s.get("title", s.get("content", "")[:60]) or "")
+            agent = str(s.get("agent_name", s.get("user_name", "?")) or "?")
+            sym = str(s.get("symbol", "") or "")
+            ts = str(s.get("created_at", "") or "")[:16]
+            print(f"  [{stype:12s}] {agent:20s} | {sym:8s} | {title[:50]:50s} | {ts}")
+    except AiTraderError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+
+def _cmd_rebalance(args: argparse.Namespace) -> None:
+    """Handle the 'rebalance' CLI command."""
+    client = ApiClient()
+    try:
+        analysis = client.analyze_positions()
+        if "error" in analysis:
+            print(analysis["error"])
+            return
+
+        print(f"\n📊 Portfolio Analysis — {analysis['total_positions']} positions")
+        print(f"   Total value: ${analysis['total_value']:,.2f}\n")
+
+        if analysis["winners"]:
+            print("🟢 Winners:")
+            for w in analysis["winners"]:
+                print(f"   {w['symbol']:8s} +{w['pnl_pct']}%  ${w['value']:,.0f}  ({w.get('weight_pct', '?')}%)")
+
+        if analysis["losers"]:
+            print("\n🔴 Losers:")
+            for l in analysis["losers"]:
+                print(f"   {l['symbol']:8s} {l['pnl_pct']}%  ${l['value']:,.0f}  ({l.get('weight_pct', '?')}%)")
+
+        if analysis["concentration_warnings"]:
+            print("\n⚠️  Concentration:")
+            for w in analysis["concentration_warnings"]:
+                print(f"   {w}")
+
+        if analysis["suggestions"]:
+            print("\n💡 Suggestions:")
+            for s in analysis["suggestions"]:
+                print(f"   • {s}")
+
+        if args.json:
+            print("\n" + json.dumps(analysis, indent=2, default=str))
+    except AiTraderError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build the CLI argument parser.
 
@@ -814,6 +1170,35 @@ def build_parser() -> argparse.ArgumentParser:
     # heartbeat
     sub.add_parser("heartbeat", help="Send heartbeat")
 
+    # strategy
+    strat_parser = sub.add_parser("strategy", help="Publish a strategy signal")
+    strat_parser.add_argument("--market", required=True,
+                              choices=["us-stock", "crypto", "polymarket"],
+                              help="Market")
+    strat_parser.add_argument("--title", required=True, help="Strategy title")
+    strat_parser.add_argument("--content", required=True, help="Strategy content/thesis")
+    strat_parser.add_argument("--symbols", help="Comma-separated symbols (e.g. AAPL,TSLA)")
+    strat_parser.add_argument("--tags", help="Comma-separated tags")
+
+    # discussion
+    disc_parser = sub.add_parser("discussion", help="Publish a discussion signal")
+    disc_parser.add_argument("--title", required=True, help="Discussion title")
+    disc_parser.add_argument("--content", required=True, help="Discussion content")
+    disc_parser.add_argument("--tags", help="Comma-separated tags")
+
+    # feed
+    feed_parser = sub.add_parser("feed", help="Browse signal feed")
+    feed_parser.add_argument("--limit", type=int, default=10, help="Max signals")
+    feed_parser.add_argument("--type", dest="type", help="Filter: realtime, strategy, discussion")
+    feed_parser.add_argument("--symbol", help="Filter by symbol")
+    feed_parser.add_argument("--keyword", help="Search keyword")
+    feed_parser.add_argument("--sort", default="new", choices=["new", "active", "following"],
+                             help="Sort order")
+
+    # rebalance
+    rebal_parser = sub.add_parser("rebalance", help="Analyze positions for rebalancing")
+    rebal_parser.add_argument("--json", action="store_true", help="Output full JSON")
+
     return parser
 
 
@@ -827,6 +1212,10 @@ def main() -> None:
         "positions": _cmd_positions,
         "trade": _cmd_trade,
         "heartbeat": _cmd_heartbeat,
+        "strategy": _cmd_strategy,
+        "discussion": _cmd_discussion,
+        "feed": _cmd_feed,
+        "rebalance": _cmd_rebalance,
     }
 
     handler = command_map.get(args.command)

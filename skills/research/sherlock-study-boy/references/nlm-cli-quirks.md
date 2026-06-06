@@ -9,7 +9,7 @@ Collected from real sessions. Add to this file as new quirks surface.
 | Report | `nlm report create <id> --format "Study Guide" --confirm` | Default output is `.md` |
 | Video | `nlm video create <id> --confirm` | Frequently rate-limited |
 | Slides | `nlm slides create <id> --confirm` | Frequently rate-limited |
-| Flashcards | `nlm flashcards create <id> --confirm --difficulty 3` | `--difficulty` takes INTEGER (3=medium) |
+| Flashcards | `nlm flashcards create <id> --confirm --difficulty medium` | `--difficulty` takes STRING: easy/medium/hard (NOT integer) |
 | Quiz | `nlm quiz create <id> --confirm --count 15 --difficulty 3` | `--difficulty` takes INTEGER |
 | Audio | `nlm audio create <id> --format deep_dive --length long` | May timeout on 1st attempt |
 | Mind map | `nlm mindmap create <id> --confirm` | |
@@ -64,6 +64,19 @@ ffmpeg -i audio-overview.m4a -acodec libmp3lame -q:a 2 audio-overview.mp3
 
 Paid NotebookLM tier can generate multiple audio overviews (two `type: "audio"` entries in studio status). Both are distinct — download each one. Video and slide creation still subject to per-minute burst rate limits even on paid tier.
 
+## Empty Artifact Sizes
+
+When flashcards or other artifacts fail silently, the downloaded files are stubs. Known sizes:
+
+| Size | Content | Cause |
+|------|---------|-------|
+| 46 bytes | `[]` or `{"cards":[]}` | Empty flashcards — no content generated |
+| 79 bytes | `{"cards":[]}` | Empty flashcards from long `--focus` strings |
+
+**Validation rule:** Any flashcard file under 200 bytes is likely empty. Check `len(json.load(open(fpath)).get('cards', [])) > 0`.
+
+Reports with `null` `custom_instructions` in `nlm studio status` cannot be matched to concepts by keyword. These are generic reports covering all notebook sources. For per-concept study guides, use `nlm notebook query` instead.
+
 ## Known Errors
 
 ### Rate Limited — Video/Slides
@@ -86,6 +99,10 @@ Slides can show `"status": "failed"` in studio status without any visible error 
 
 Video can briefly show `"status": "unknown"` in studio status during generation. This is not a failure — the video is still being processed. **Do not attempt to download while status is unknown** (it will fail). Poll until it transitions to "completed". If it stays "unknown" for 5+ minutes, retry with a new video create command.
 
+### Video In-Progress → Failed Transition
+
+A video showing `status: "in_progress"` on one check can show `status: "failed"` on the next. This is not a polling artifact — the video genuinely errored during generation. The fix is to resubmit with `nlm video create` again. The new artifact gets a different ID, so update your state file with the new artifact ID.
+
 ### Audio ReadTimeout
 
 ```
@@ -101,6 +118,34 @@ Error: Invalid value for '--difficulty' / '-d': 'medium' is not a valid integer.
 ```
 
 Use `--difficulty 3` for medium, not the string `"medium"`.
+
+### Focus Strings Must Be Short (2-5 Words)
+
+Long `--focus` strings cause silent failure across video, slides, and flashcards. The pipeline used full concept names like "Human Organ Systems (Coordination & Excretion)" which produced empty flashcards and unknown-status videos.
+
+**Fix:** Use 2-5 word focus strings. Store them separately from concept names:
+```json
+{"rank": 9, "name": "Human Organ Systems (Coordination & Excretion)", "focus": "Organ Systems"}
+```
+
+Pipeline scripts should read the `focus` field, not the `name` field, for all `--focus` flags.
+
+### Report --prompt Not Focusing
+
+Reports created with `--prompt "Focus on X..."` still generate generic content covering ALL notebook sources. The `--prompt` is treated as a style suggestion, not a content filter. For focused per-concept study guides, use `nlm notebook query` instead:
+
+```bash
+nlm notebook query <notebook-id> "Focus on <topic> for IGCSE Biology. Give me: 1. Key definitions 2. Core processes 3. Common exam questions 4. Diagrams to memorize 5. Common mistakes."
+```
+
+This returns focused, citation-rich content. Save the JSON response's `answer` field as the study guide markdown.
+
+### Flashcards --difficulty Takes String, Not Integer
+
+Contrary to the quiz command, flashcards `--difficulty` accepts `easy`, `medium`, or `hard` (not integers). Using `3` causes:
+```
+Error: Unknown difficulty '3'. Valid options: easy, hard, medium
+```
 
 ## Auth
 

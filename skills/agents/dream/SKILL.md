@@ -1,8 +1,9 @@
 ---
 name: dream
 description: "DREAM — Nightly Reflection & Skill Evolution Engine. Analyzes agent scores, spots patterns, proposes improvements while you sleep."
-version: "1.1"
+version: "1.2"
 created: "2026-04-14"
+updated: "2026-06-05"
 owner: Dwayne
 ---
 
@@ -364,31 +365,26 @@ from hermes_tools import terminal
 ```
 This hit the DREAM cron on both May 12 and May 13 — same error, same fix. The sandbox resets imports between `execute_code` calls, so each block must be self-contained.
 
-### execute_code read_file Deduplication (Discovered May 29)
-When calling `read_file` from `execute_code`, the return dict has keys: `status`, `message`, `path`, `dedup`, `content_returned`. **The key is `content_returned`, NOT `content`.** More critically, `content_returned` is a **boolean** — it's `True` when content was returned, `False` when the file was deduplicated (already read earlier in the conversation). The actual file content is NOT in the return dict on dedup hits.
+### execute_code read_file Deduplication (Discovered May 29, STILL RECURRING May 30)
 
-**Observed May 29:** The DREAM cron hit `KeyError: 'content'` three times trying to access `result['content']` from a `read_file` call. The same error hit this session's DREAM run twice before diagnosis.
+> **⚠️ THIS IS THE #1 RECURRING BUG IN DREAM CRON CODE GENERATION.**
+> Hit 3 times May 29, 5 times May 30. The model generating DREAM's code keeps using `result['content']` even though the fix is documented here. If you are the model generating DREAM's `execute_code` blocks, **STOP USING `read_file` INSIDE `execute_code`**. Use `terminal("cat ...")` instead. No exceptions.
+
+When calling `read_file` from `execute_code`, the return dict has keys: `status`, `message`, `path`, `dedup`, `content_returned`. **The key is `content_returned`, NOT `content`.** More critically, `content_returned` is a **boolean** — it's `True` when content was returned, `False` when the file was deduplicated (already read earlier in the conversation). The actual file content is NOT in the return dict on dedup hits.
 
 **Why this happens:** `read_file` deduplicates by path — if you read the same file twice in one conversation, the second call returns `content_returned: False` with a message like "File unchanged since last read."
 
-**Fix — two options:**
-1. **Read once, cache in variable.** Never call `read_file` on the same path twice in one `execute_code` block.
-2. **Use `terminal` with heredoc for file parsing** when you need to re-read files:
+**THE FIX (use this, not `read_file`):**
 ```python
-r = terminal("python3 << 'PYEOF'\nimport json\nwith open('/path/to/file.json') as f:\n    data = json.load(f)\n# process data\nPYEOF")
-```
-3. **Check `content_returned` before accessing content:**
-```python
+# WRONG — will KeyError on 'content' after first read
 r = read_file('/path/to/file')
-if r.get('content_returned'):
-    # Content was returned in the conversation context
-    pass
-else:
-    # File was deduplicated — fall back to terminal
-    r = terminal("cat /path/to/file")
+data = json.loads(r['content'])  # KeyError!
+
+# RIGHT — terminal with heredoc, no dedup issue
+r = terminal("python3 << 'PYEOF'\nimport json\nwith open('/path/to/file.json') as f:\n    data = json.load(f)\nprint(json.dumps(data))\nPYEOF")
 ```
 
-**Rule of thumb:** In `execute_code`, prefer `terminal` with heredoc for file reading. Reserve `read_file` for single-read cases where you know the file hasn't been read yet in this conversation.
+**Rule of thumb:** In `execute_code`, ALWAYS use `terminal` with heredoc for file reading. NEVER use `read_file` — the dedup behavior makes it unreliable in multi-step scripts. This is not a suggestion; it's a hard-won lesson from 8+ failures across 3 nights.
 
 ### execute_code Script Truncation (Discovered May 2026)
 The DREAM cron's `execute_code` scripts get truncated mid-expression, causing recurring Python errors. Observed on May 16, 18, 20, and 22 — same pattern each time: the script cuts off in the middle of an f-string, method call, or expression.
@@ -589,7 +585,8 @@ When session files have been cleaned up by the nightly archival cron before DREA
 
 **Observed May 27:** Session files from May 25–26 were archived before DREAM ran. Error logs revealed 293 combined tool errors across those two days — the highest 2-day count in the log. This was invisible without the fallback approach.
 
-**Recurring issue (May 29):** ALL May 28 session files were cleaned up before DREAM could analyze them. Error logs were the only signal. This is now the 3rd occurrence of cleanup-before-analysis in the DREAM audit history.
+**Recurring issue (May 29–Jun 5, 2026):** ALL session files cleaned up before DREAM could analyze them. Error logs were the only signal. This is now the **6th+ occurrence** of cleanup-before-analysis in the DREAM audit history (May 25–26, May 28, May 29, May 30, Jun 3–4). 8 user sessions lost in the June window alone. This is the single biggest threat to DREAM's effectiveness.
+**Full timeline:** See `references/cleanup-before-analysis-timeline.md`.
 
 **Timing fix:** The cleanup cron (`59ebc5bd5e4e`) should run AFTER DREAM (03:00 UTC), not before. Suggested cleanup window: 05:00–06:00 UTC. If the cleanup cron cannot be rescheduled, DREAM should check for the cleanup cron's run time in the error log and note when it ran relative to DREAM's own run.
 
@@ -612,12 +609,22 @@ The SHARED_MEMORY block is the usual target for pruning, but individual user ent
 
 **Observed May 27:** SHARED_MEMORY pruning saved only 82 bytes. But shortening 3 verbose user entries (FinceptTerminal, Study Boy, momentum scanner) and removing 1 past event saved 943 additional bytes — enough to bring MEMORY.md from 4,546 to 3,603 bytes (under the 3,800 threshold). The key insight: **skill references are cheaper than inline detail.** If an entry is longer than 150 chars and describes how-to-do-something rather than who-the-user-is, it belongs in a skill.
 
-### MEMORY.md Round-Trip Conflict (Discovered May 29)
+### MEMORY.md Round-Trip Conflict (Discovered May 29, hit main session May 30)
 DREAM prunes MEMORY.md via the `patch` tool, which modifies the file content directly. After this, the `memory` tool refuses to write because the file "would not round-trip through the memory tool (likely added by the patch tool, a shell append, a manual edit)." This means any session running after DREAM's prune cannot use the `memory` tool until MEMORY.md is normalized.
 
 **Root cause:** The `memory` tool validates that its internal representation of MEMORY.md matches what's on disk. When `patch` modifies the file externally, the tool's internal cache is stale and it refuses to write to prevent data loss.
 
-**Impact:** Post-DREAM sessions (especially early-morning cron jobs and first user sessions) hit memory write failures. Observed May 28 in session `20260528_013507_459370e4`.
+**Impact:** Post-DREAM sessions (especially early-morning cron jobs and first user sessions) hit memory write failures. Observed May 28, May 30, Jun 3 (session 192004_384a11), Jun 4 (session 025855_cd9d2e), and Jun 5 (session 023444_aa240492) — 5 hits across 8 days. MEMORY.md was at healthy sizes each time (2,779–3,074 bytes), confirming this is a tool cache issue, NOT a size issue. **The post-prune normalization step documented below has NOT prevented recurrence** — the round-trip conflict persists despite clean file writes.
+
+**POST-PRUNE NORMALIZATION (do this every time DREAM prunes):**
+After any `patch` to MEMORY.md, immediately read the file back via `terminal` and write it clean:
+```python
+# After patching MEMORY.md, normalize it so the memory tool's cache resyncs
+r = terminal("cat ~/.hermes/memories/MEMORY.md")
+# Write it back through terminal (not patch) to reset the file mtime/content
+terminal("cat > ~/.hermes/memories/MEMORY.md << 'NORMEOF'\n" + r['output'] + "\nNORMEOF")
+```
+This doesn't fix the round-trip issue directly (only a non-DREAM `memory` tool call can do that), but it ensures the file content is clean and the next `memory` tool call has the best chance of succeeding.
 
 **Mitigation options (choose one, needs Dwayne approval):**
 1. Use the `memory` tool itself for pruning (if available in cron — it usually isn't)
@@ -626,6 +633,40 @@ DREAM prunes MEMORY.md via the `patch` tool, which modifies the file content dir
 4. Schedule DREAM to run AFTER the cleanup cron but BEFORE the first user-facing cron job, so the normalization happens naturally.
 
 **For now:** Document in the morning brief whenever DREAM prunes MEMORY.md, so the next session knows memory writes may be affected.
+
+### Provider Cross-Border Isolation (mimo/xiaomi 451, Discovered Jun 2026)
+The xiaomi/mimo provider returns HTTP 451 "cross-border isolation policy" for this deployment's location. ALL mimo model variants (v2-pro, v2.5-pro, v2-flash) are completely blocked. Unlike rate limits (which self-heal), cross-border blocks are permanent until the provider enables cross-border access on their side.
+
+**Signature:** Error code 451 with message "Access denied due to cross-border isolation policy. Please ask the service owner to enable 'Allow Cross-border Access' in MiFE." Multiple cron jobs and user sessions fail silently.
+
+**Detection:** Count 451 + "cross-border" errors. If > 5 in a day, the provider is blocked for the deployment:
+```bash
+grep -c '451.*cross-border' ~/.hermes/logs/errors.log
+```
+
+**Which jobs are affected:** Any cron job using provider=xiaomi. Check with:
+```bash
+python3 -c "import json; [print(j['id'][:12], j.get('name','?'), j.get('provider','?')) for j in json.load(open('/home/ubuntu/.hermes/cron/jobs.json')).get('jobs',[]) if 'xiaomi' in str(j.get('provider',''))]"
+```
+
+**Observed Jun 3-4, 2026:** 44 total 451 errors. Affected cron 59ebc5bd5e4e (Daily Night Ignore Reminders, mimo-v2-pro, runs 23:00 UTC) and user sessions 025855_cd9d2e (interrupted twice) and 195157_6b827c.
+
+**Action:** Flag in morning brief with: (a) which cron jobs use xiaomi/mimo, (b) how many user sessions were affected, (c) recommendation to rotate affected jobs to deepseek or zai providers. This does not self-heal — the provider block is permanent until MiFE is reconfigured.
+
+### ML Skills Profile Mismatch (Discovered Jun 2026)
+Skills visible in the system skill registry (listed as `<available_skills>` in the system prompt) may NOT be accessible via `skill_manage` or `skill_view` in the active profile. The agent sees the skill name, tries to load it, and gets "not found in active profile 'default'."
+
+**Signature:** Multiple consecutive skill_manage errors from a single session, all showing "Skill 'X' not found in active profile 'default'." The pattern is systematic — all skills from one category (e.g., mlops/*) fail together.
+
+**Observed Jun 4, 2026:** Session 023152_535ac54e: 9 ML skills failed (fine-tuning-with-trl, peft-fine-tuning, gguf-quantization, serving-llms-vllm, stable-diffusion-image-generation, segment-anything-model, audiocraft-audio-generation, evaluating-llms-harness, modal-serverless-gpu). These exist in the system registry but not in the 'default' profile.
+
+**Detection:** Count skill_manage errors with "not found in active profile":
+```bash
+grep -c "not found in active profile" ~/.hermes/logs/errors.log
+```
+If > 5 in a day and all from one session, it's a profile mismatch — the user was trying to do ML work but the skills weren't wired.
+
+**Action:** Note in audit as MEDIUM. The fix is profile configuration (adding the mlops skill path to the default profile), not a code change. Flag if it recurs across multiple days.
 
 ### GLMS Rate Limiting Cascade (Observed May 29)
 The GLMS MCP tools (web_search_prime, webReader, zread_search_doc, zread_get_repo_structure) share a single API quota. When the weekly/monthly limit is exhausted, ALL GLMS tools fail simultaneously with error code 429 and message "Weekly/Monthly Limit Exhausted." The agent retries the same GLMS tools repeatedly, wasting turns.

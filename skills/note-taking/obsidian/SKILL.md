@@ -56,6 +56,21 @@ For a simple append with no stable context, `terminal` is acceptable if it is th
 
 Use `patch` for focused note changes when the current content gives you stable context. Prefer this over shell text rewriting.
 
+## Second Brain Vault
+
+See `references/second-brain-vault.md` for Dwayne's knowledge base vault (dman1313/second-brain) — wiki, journal, CRM, and raw ingestion queue. Separate from the agent-memory vault used for fleet coordination.
+
+### Automated Ingestion Pipeline
+
+The second brain has a live automated pipeline. See `references/second-brain-pipeline.md` for full architecture.
+
+**How it works:**
+1. **Feed Watcher** (`~/.hermes/scripts/feed-watcher.py`) — no_agent cron, runs every 6h (00,06,12,18). Checks RSS feeds from `~/.hermes/scripts/second-brain-feeds.json`, saves new articles to `raw/`.
+2. **Ingestion Processor** — agent cron (job `7ee02d19d4a2`), runs every 6h staggered (01:30,07:30,13:30,19:30). Loads the obsidian skill, reads `raw/` items, creates wiki pages, updates CRM/indexes, moves to `raw/processed/`, commits+pushes.
+3. **Quick-add** (`~/.hermes/scripts/quick-add.py`) — manual URL → `raw/` for YouTube, Twitter, or one-off articles.
+
+**Cron stagger pattern:** Feed watcher runs 1.5h before ingestion so new items are ready. If adding new data sources, add to the feed watcher config, not directly to raw/.
+
 ## Wikilinks
 
 Obsidian links notes with `[[Note Name]]` syntax. When creating notes, use these to link related content.

@@ -115,8 +115,8 @@ nlm video create <notebook-id> --confirm
 # Slides
 nlm slides create <notebook-id> --confirm
 
-# Flashcards (difficulty is an INTEGER, not a word — pass 3 for medium)
-nlm flashcards create <notebook-id> --confirm --difficulty 3
+# Flashcards (difficulty is a STRING — pass medium)
+nlm flashcards create <notebook-id> --confirm --difficulty medium
 
 # Quiz (difficulty is an INTEGER, not a word — pass 3 for medium)
 nlm quiz create <notebook-id> --confirm --count 15 --difficulty 3
@@ -201,21 +201,24 @@ After the notebook-level package is done, you can generate **focused artifacts p
 
 **Supported per-concept generators:**
 
-| Artifact | Command | Notes |
-|----------|---------|-------|
-| Video | `nlm video create <id> --confirm --focus "Short Topic"` | Keep focus 2-5 words max. Long focus strings cause silent failure (status: "unknown", download fails). |
-| Slides | `nlm slides create <id> --confirm --focus "Short Topic"` | Same focus length. May fail on first attempt — retry immediately works. |
-| Report | `nlm report create <id> --format "Study Guide" --confirm --prompt "Focus on [topic]"` | Uses `--prompt`, not `--focus`. Fastest generator. |
+| Artifact | Command with focus | Notes |
+|----------|-------------------|-------|
+| Video | `nlm video create <id> --confirm --focus "Short Topic"` | Keep focus SHORT (2-5 words max). Long focus strings cause silent failure. |
+| Slides | `nlm slides create <id> --confirm --focus "Short Topic"` | Same focus length advice. Slides can fail on first attempt — retry immediately works. |
+| Study Guide | `nlm notebook query <id> --json "Focus on [topic] for IGCSE..."` | Use query, NOT report create. Save response `.value.answer` as markdown. |
+| Flashcards | `nlm flashcards create <id> --confirm --difficulty medium --focus "Short"` | `--difficulty` takes STRING (easy/medium/hard), NOT integer. Keep focus short. |
 
 **Per-concept workflow:**
 
 1. Create `concepts/` dir + `concept-progress.json` with all 10 concepts and their status
 2. Start report (seconds), then slides, then video (3-7 min) — slowest last
 3. Poll every 60s (videos/slides filter all sources and take longer than notebook-level)
-4. **"Unknown" status fix:** Focused videos may show `status: "unknown"` after processing. If download fails, retry with shorter `--focus` (2-3 words). The original may complete in background — poll periodically.
+4. **"Unknown" status fix:** Focused videos may show `status: "unknown"` after processing. **Wait 3-5 minutes and poll again** — the original usually completes in the background. Do NOT immediately retry generation; a new retry often fails while the original succeeds. Only generate a new video if the original shows `failed` after 10+ minutes.
 5. Space concept generations 1 hour apart to avoid rate limits and let each batch fully render.
+6. **CRITICAL: Use SHORT focus strings (2-5 words max).** Store a separate `focus` field in concept-progress.json. Full concept names like "Human Organ Systems (Coordination & Excretion)" cause silent failures (empty flashcards, unknown videos). Use "Organ Systems" instead.
+7. **Use `nlm notebook query` for study guides, NOT `nlm report create --prompt`.** The `--prompt` flag is treated as a style suggestion and produces generic content. Query returns focused, citation-rich content.
 
-**Automation via cron:** For 10-concept pipelines, write a no-agent cron script that reads concept-progress.json, generates the next pending concept, polls for completion, downloads, and updates progress. Deliver output to `concepts/` dir. The script keeps going until all concepts are marked `"done"`.
+**Automation via cron:** For 10-concept pipelines, write a no-agent cron script that reads concept-progress.json, generates the next pending concept, polls for completion, downloads, and updates progress. Deliver output to `concepts/` dir. The script keeps going until all concepts are marked `"done"`. **Tip:** The pipeline script uses a fire-and-forget pattern (Phase 1 submits, Phase 2 checks next run), but you can run Phase 1 and then immediately poll `nlm studio status` + download in the same session — no need to wait for the next cron cycle. Just run the script, wait 3-5 minutes, then manually check status and download completed artifacts.
 
 **Progress tracker format:**
 ```json
@@ -284,7 +287,7 @@ Native generators produce **one artifact per notebook** without focus. Generate 
 nlm video create <id> --confirm
 nlm slides create <id> --confirm
 nlm report create <id> --format "Study Guide" --confirm
-nlm flashcards create <id> --confirm --difficulty 3
+nlm flashcards create <id> --confirm --difficulty medium
 nlm quiz create <id> --confirm --count 15 --difficulty 3
 ```
 
@@ -296,17 +299,38 @@ After the notebook-level package is complete, you can generate **focused artifac
 
 | Artifact | Command with focus | Notes |
 |----------|-------------------|-------|
-| Video | `nlm video create <id> --confirm --focus "Concept Name"` | Keep focus SHORT (2-5 words). Long focus strings may cause silent failure (status: "unknown", download fails). Retry with shorter focus. |
-| Slides | `nlm slides create <id> --confirm --focus "Concept Name"` | Same focus length advice. Slides can fail on first attempt — retry immediately usually works. |
-| Report | `nlm report create <id> --format "Study Guide" --confirm --prompt "Focus on [topic] for IGCSE Biology"` | Reports use `--prompt`, not `--focus`. Fastest generator — completes in seconds. |
+| Video | `nlm video create <id> --confirm --focus "Short Topic"` | Keep focus SHORT (2-5 words max). Long focus strings cause silent failure. |
+| Slides | `nlm slides create <id> --confirm --focus "Short Topic"` | Same focus length advice. Slides can fail on first attempt — retry immediately works. |
+| Study Guide | `nlm notebook query <id> --json "Focus on [topic] for IGCSE..."` | Use query, NOT report create. Save response `.value.answer` as markdown. |
+| Flashcards | `nlm flashcards create <id> --confirm --difficulty medium --focus "Short"` | `--difficulty` takes STRING (easy/medium/hard), NOT integer. Keep focus SHORT (2-5 words). |
+
+**Do NOT use `nlm report create` for per-concept study guides.** The `--prompt` parameter is treated as a style suggestion, not a content filter — reports always cover ALL notebook sources generically. Use `nlm notebook query` instead:
+
+```bash
+nlm notebook query <notebook-id> --json \
+    "Focus on <topic> for IGCSE Biology exam preparation. Give me: 1. Key definitions 2. Core processes 3. Common exam questions 4. Diagrams to memorize 5. Common mistakes."
+```
+
+Then extract the answer from the JSON response:
+```python
+import json
+data = json.loads(response)
+answer = data.get('response', {}).get('answer', '') or data.get('value', {}).get('answer', '')
+```
 
 **Per-concept workflow:**
 
 1. Create `concepts/` directory under the notebook's study-packages folder
-2. Start with the report (fastest), then slides, then video (slowest)
-3. Use a progress tracker (`concept-progress.json`) with status per concept
-4. **Known issue:** Focused videos may show `status: "unknown"` after 3-5 minutes of processing. If download fails at this point, retry with a shorter `--focus` string (2-3 words max). The original may complete in the background — check `nlm studio status` periodically.
-5. Space concept generation sessions 1 hour apart to avoid rate limits and let each set fully render.
+2. Generate study guide via `nlm notebook query` (fastest, most reliable)
+3. Generate flashcards via `nlm flashcards create --difficulty medium --focus "Short"`
+4. Generate slides via `nlm slides create --focus "Short"` (may need retry)
+5. Generate video via `nlm video create --focus "Short"` (slowest, 3-7 min)
+6. Use a progress tracker (`concept-progress.json`) with status per concept
+7. **Validate artifacts on download** — check min file sizes (video >10MB, slides >100KB, study guide >500 chars, flashcards non-empty cards array). Don't trust "file exists" alone.
+8. **Known issue:** Focused videos may show `status: "unknown"` after 3-5 minutes of processing. If download fails at this point, retry with a shorter `--focus` string (2-3 words max). The original may complete in the background — check `nlm studio status` periodically.
+9. Space concept generation sessions 1 hour apart to avoid rate limits and let each set fully render.
+
+**Automated pipeline:** See `~/.hermes/scripts/concept-pipeline.sh` for a working cron-compatible script that implements this full workflow with validation, retry logic, and timeout handling.
 
 ### When to use which
 
@@ -356,7 +380,9 @@ Status values: `"pending"`, `"generating"`, `"done"`, `"failed"`.
 
 ## Pitfalls
 
-- **Focused video "unknown" status:** Videos generated with `--focus` may show `status: "unknown"` in studio status after 3-5 minutes. This means the generation timed out internally. If download fails, retry with a shorter `--focus` string (2-5 words max). The original may still complete — poll periodically.
+- **Per-concept generation:** See `references/pipeline-v2-patterns.md` for the recommended approach. Key: use `nlm notebook query` for study guides (not `nlm report create`), keep focus strings to 2-5 words, and validate artifact content not just file existence.
+
+- **Focused video "unknown" status:** Videos generated with `--focus` may show `status: "unknown"` in studio status after 3-5 minutes. **Do NOT immediately retry with a new generation.** In practice, the original video almost always completes in the background — a retry with shorter focus will often **fail** while the original succeeds. Instead: wait 3-5 minutes and poll `nlm studio status` again. Only retry generation if the original shows `status: "failed"` after 10+ minutes. If the original shows `completed`, download it — even if a retry also exists and failed.
 - **Slides can fail on first attempt (non-rate-limit):** Slides sometimes fail with `status: "failed"` for no clear reason. Unlike rate-limited errors, just retry immediately — it usually works on the second attempt.
 - **Generation takes 3-7 minutes per artifact for focused videos/slides** (longer than notebook-level because they filter 95+ sources). Report is fastest (~seconds). Poll every 60 seconds for video/slides, not 15-30.
 - **Generation takes 1-5 minutes per artifact.** Always poll with `nlm studio status <id>` before trying to download. Don't assume instant availability.

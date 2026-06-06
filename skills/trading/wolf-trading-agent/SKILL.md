@@ -1,7 +1,7 @@
 ---
 name: wolf-trading-agent
 description: Wolf Trading Agent — daily scanner of Reddit, Twitter/X, and financial news for stock/options trade signals. Scores and ranks potential trades using multi-source fusion.
-version: 1.2.0
+version: 1.3.0
 author: Hermes Agent
 license: MIT
 tags: [trading, reddit, twitter, news, stock-scanner, options, signals, wolf]
@@ -140,10 +140,11 @@ A ticker appearing in Wolf signals AND scoring >60 on the quant composite is the
 ```
 scripts/
 ├── wolf_scan_gnews.sh        # Wrapper: exports GNEWS_API_KEY then runs scan
-├── ticker_extractor.py       # Ticker symbol extraction + sentiment
+├── ticker_extractor.py       # Ticker extraction + sentiment
 ├── scoring_engine.py         # Signal fusion + scoring + digest formatting
 ├── spread_evaluator.py       # Vertical spread playbook applied to signals
 ├── wolf_newsletter.py        # Google Docs daily newsletter generator
+├── alpaca_options_scan.py    # Options volume scan via Alpaca snapshots API (free tier)
 └── scanners/
     ├── reddit_scanner.py     # Reddit via DuckDuckGo
     ├── twitter_scanner.py    # Twitter via xurl CLI (or skip)
@@ -151,10 +152,13 @@ scripts/
 references/
 ├── vertical-spread-playbook.md  # Dwayne's small-account spread rules
 ├── alpaca-options-chain.md      # Alpaca options API with real Greeks (free tier works)
+├── per-contract-greeks.md       # Per-strike delta/IV/bid-ask extraction from Alpaca snapshots (for trade construction from aggregate scan results)
 ├── google-docs-borderbottom-bug.md  # borderBottom API bug → workaround
 ├── massive-api-notes.md  # Massive.com API notes (pending auth setup)
 └── quant-nn-audit-2026-05-30.md  # Full audit of quant-nn LSTM pipeline (critical issues)
 output/
+└── api_discovery_*.md  # Daily Sherlock endpoint test reports
+```
 └── api_discovery_*.md  # Daily Sherlock endpoint test reports
 ```
 
@@ -196,12 +200,52 @@ Requires `RAGFLOW_API_URL` + `RAGFLOW_API_KEY` (already in `~/.hermes/.env`). Th
 
 ## Options Volume Scanner (In-Session)
 
-When the user asks for "options plays" or "unusual volume", use the pattern in `references/options-volume-scan.md`. Quick version:
+When the user asks for "options plays" or "unusual volume", the working path order is:
 
-1. Write scanner script to `/tmp/options_volume_scan.py` (never use bash heredoc — `&` breaks)
-2. Scan 20-80 tickers with `time.sleep(2)` between yfinance requests
-3. Filter ATM ±10%, rank by total volume, flag V/OI > 1.5x as unusual
-4. Deep-dive top 8-10 tickers: show top 3 calls/puts per expiration
+### Step 1 — Alpaca Options Scan (works reliably)
+Run the batch scanner across 61 known tickers (takes ~30s):
+```bash
+cd ~/.hermes/skills/trading/wolf-trading-agent/scripts
+python3 alpaca_options_scan.py
+```
+Output: P/C ratio, total call/put volume, IV for calls and puts, and directional bias per ticker.
+
+**Reading the scan:**
+- **P/C ratio < 0.35** → extremely bullish call skew (e.g. MU 0.31, NFLX 0.29 today)
+- **P/C ratio < 0.70** → bullish bias
+- **P/C ratio 0.70-1.30** → neutral
+- **P/C ratio > 1.30** → bearish
+- **High IV (>30%)** favors credit spreads (premium selling)
+- **Low IV (<25%)** favors debit spreads (directional)
+
+### Step 2 — Get Real-Time Prices
+yfinance is consistently rate-limited from this VPS. Use one of these instead:
+
+**Option A — Alpaca stock snapshots** (fast, reliable):
+```python
+from alpaca.data.requests import StockSnapshotRequest
+snap = stock_client.get_stock_snapshot(StockSnapshotRequest(symbol_or_symbols=["MU"]))
+price = snap["MU"].latestTrade.p
+volume = snap["MU"].dailyBar.volume
+```
+
+**Option B — Nasdaq API** (no auth, quick price + name lookup):
+```python
+import urllib.request, json
+url = f'https://api.nasdaq.com/api/quote/{ticker}/info?assetclass=stocks'
+req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+data = json.loads(urllib.request.urlopen(req).read())
+price = data['data']['primaryData']['lastSalePrice']
+```
+Note: Nasdaq API does not return % change on the info endpoint.
+
+### Step 3 — Pick Candidates & Suggest Spreads
+- Top candidates get 2-4 spread suggestions each
+- Apply the vertical spread playbook: credit spreads in high IV, debit in low IV
+- Max loss check: if > 2% of account → tighten width to 1.5%
+
+### Step 4 — Act (fallback when Alpaca fails)
+If `alpaca_options_scan.py` fails or you need per-ticker deep-dive, use the pattern in `references/options-volume-scan.md`. The `--symbol` flag on `alpaca_options_scan.py` may time out (>60s) for per-ticker chain queries — use the Alpaca Python SDK directly instead (see `references/alpaca-options-chain.md` for the pattern).
 
 ## Pitfalls
 
@@ -213,9 +257,13 @@ When the user asks for "options plays" or "unusual volume", use the pattern in `
 - **Market hours**: Best run before market open (8 AM ET) on weekdays. Running on weekends produces low-signal results.
 - **GNews API free tier**: 100 requests/day, 12-hour article delay. 14 queries × 5 results = 70 req/scan. Set `GNEWS_API_KEY` env var (already in `~/.hermes/.env`, confirmed 2026-05-29) or pass `--apikey`. Sign up free at gnews.io/register — no credit card.
 - **Free news sources that work**: GNews API (primary, free tier, 12h delay). CNBC RSS (`search.cnbc.com/rs/search/combinedcms/view.xml`) and MarketWatch RSS (`feeds.marketwatch.com/marketwatch/topstories`) as fallback. Yahoo Finance RSS returns empty.
-- **Alpaca free tier limits**: Quotes API works fine (unlimited). Historical bars work. Minute bars return 403 on free tier. **Options chain with real Greeks works** (confirmed 2026-05-29) — use `OptionChainRequest` for spread evaluation. Paper trading works for execution.
+- **Alpaca options endpoint**: Use `OptionSnapshotRequest` (NOT `OptionLatestQuoteRequest`) for options data — returns Greeks, IV, bid/ask, and last trade for both calls AND puts on free tier. The data endpoint `https://data.alpaca.markets/v1beta1/options/snapshots/{ticker}` works on free tier. The paper-trading endpoint `https://paper-api.alpaca.markets/v1beta1/options/snapshots/{ticker}` returns 404. Always use the data URL. `OptionSnapshotRequest` has no `daily_bar` on free tier — no volume or OI. See alpaca-volume-scanner `references/options-data-patterns.md` for full data matrix.
+- **Alpaca free tier limits**: Quotes API works fine (unlimited). `StockSnapshotRequest` returns stock prices + volume via `daily_bar`. **`StockBarsRequest` returns 403 for ALL timeframes** (including daily) — "subscription does not permit querying recent SIP data". Use snapshots instead. **Options chain with real Greeks + IV works** (confirmed 2026-06-02) — use `OptionSnapshotRequest` not `OptionLatestQuoteRequest`. Paper trading works for execution.
 - **Financial site browser blocking**: Barchart, Yahoo Finance, Finviz, and Unusual Whales all block automated browser access (Cloudfront 403, Cloudflare challenges, rate limits). CBOE market statistics page works (`cboe.com/markets/us/options/market-statistics`). For per-ticker options data, use yfinance directly with sleep delays (see below).
-- **yfinance rate limiting**: Yahoo Finance aggressively rate-limits. When scanning 80+ tickers, add `time.sleep(2)` between requests. At ~20 tickers with 2s delay, yfinance works reliably. Never use bash heredocs for scripts containing `&` — write to a .py file first (the `&` gets interpreted as backgrounding). Always wrap options chain pulls in try/except since some tickers return empty chains.
+- **yfinance rate limiting**: Yahoo Finance aggressively rate-limits. When scanning 80+ tickers, add `time.sleep(2)` between requests. At ~20 tickers with 2s delay, yfinance works reliably. Never use bash heredocs for scripts containing `&` — write to a .py file first (the `&` gets interpreted as backgrounding). Always wrap options chain pulls in try/except since some tickers return empty chains. **Cascading failure**: running wolf_scan + momentum-scanner + options scanner back-to-back exhausts yfinance. Switch to Alpaca options backend when you hit `YFRateLimitError`.
+- **Alpaca `--symbol` flag on alpaca_options_scan.py may time out**: Per-ticker chain queries via the `--symbol` flag can hang for >60s. Don't rely on it for deep dives. Use the Alpaca Python SDK `OptionChainRequest` directly for per-ticker chain analysis (pattern in `references/alpaca-options-chain.md`).
+- **Nasdaq API no % change**: The Nasdaq `info` endpoint returns `lastSalePrice` and company name but no `pctChange` field. Use it for quick display prices only, not for movement analysis.
+- **Alpaca stock snapshots work for real-time prices**: `StockSnapshotRequest` + `.latestTrade.p` gives the current price. `.dailyBar.volume` gives daily volume. Both work on free tier. Use these instead of yfinance for price checks.
 
 ### Scoring & Data Quality
 - **Ticker false positives**: The `FALSE_POSITIVES` set in `ticker_extractor.py` filters common words. Add new false positives there.

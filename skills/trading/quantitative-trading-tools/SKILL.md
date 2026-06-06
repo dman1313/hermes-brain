@@ -24,11 +24,23 @@ triggers:
   - "directional edge scan"
 ---
 
+# References
+
+- `references/free-data-sources.md` — Curated free financial APIs (stocks, crypto, sentiment, prediction markets, macro) with auth requirements and rate limits
+- `references/presentation-workflow.md` — Presentation workflow notes
+
+---
+
 # Quantitative Trading Tools
 
 Two complementary quant analysis systems: commodity positioning intelligence via CFTC COT data, and stock directional edge detection via walk-forward LSTM neural networks.
 
 ---
+
+## References
+
+- `references/presentation-workflow.md`
+- `references/free-data-sources.md` — Verified free financial data APIs (no-auth + free-key tiers), includes Massive grouped endpoint technique
 
 ## Part A: Commodity Market Intelligence (COT Data)
 
@@ -54,6 +66,32 @@ When concentrated short-dated options flow doesn't fit the current narrative, th
 - `CRUDE OIL, LIGHT SWEET-WTI - ICE FUTURES EUROPE` (disagg) — ICE WTI, current
 - `BRENT LAST DAY - NEW YORK MERCANTILE EXCHANGE` (both datasets) — Brent, current
 - `CRUDE OIL, LIGHT SWEET - NEW YORK MERCANTILE EXCHANGE` (legacy only) — NYMEX WTI, **STALE: only through Feb 2022**
+
+#### FRED (Federal Reserve Economic Data) — NOW LIVE
+
+- API key in `~/.hermes/scripts/fred_query.py`
+- No rate limits on basic queries, 800K+ time series
+- Key series: GDP, FEDFUNDS, CPIAUCSL, UNRATE, DGS10, DGS2, T10Y2Y, SP500, VIXCLS, ICSA, MORTGAGE30US
+- Usage: `python3 ~/.hermes/scripts/fred_query.py <SERIES_ID> [--limit N] [--start YYYY-MM-DD] [--end YYYY-MM-DD]`
+- List all common series: `python3 ~/.hermes/scripts/fred_query.py list`
+
+#### Massive.com (Polygon.io rebrand)
+
+- API key in memory (`I_NK53ie5NuBz_VP1f6cMporEkozLxzi`)
+- Free tier: 5 calls/min, 2 years historical data
+- Best endpoint: `GET /v2/aggs/grouped/locale/us/market/stocks/{date}` — returns OHLCV for ALL US stocks in ONE call (12K+ tickers). This is the killer feature for batch scanning.
+- Also: snapshots, technical indicators (SMA/EMA/MACD/RSI built-in), news with sentiment
+- Paid-only on free tier: snapshots, gainers/losers, fundamentals, short interest
+- MCP server: `github.com/massive-com/mcp_massive`
+- Pitfall: Free tier is strict 5/min. Use the grouped endpoint for bulk scans instead of per-ticker calls.
+
+#### MarketAux — Stock News + Sentiment
+
+- API key in memory (`NEFhMjB2KY7rXyyuJgR9u6NaLetL6lUWV10AQPpM`)
+- Endpoint: `GET https://api.marketaux.com/v1/news/all?symbols=AAPL,NVDA&api_token=KEY&limit=10&language=en`
+- Entity search: `GET https://api.marketaux.com/v1/entity/search?search=Tesla&api_token=KEY`
+- Free tier: 100 req/day
+- Sentiment field present but often N/A on free tier
 
 #### Blocked / Not Scriptable
 
@@ -247,7 +285,8 @@ Each ticker takes ~15–18s. Foreground timeout is 600s — max ~15 tickers per 
 
 ### NN Scanner Pitfalls
 
-- **Foreground timeout on large batches**: ~17s/ticker × 36 tickers ≈ 10 min > 600s limit. Split into parallel background jobs.
+- **Foreground timeout on large batches**: ~17s/ticker × 36 tickers ≈ 10 min > 600s limit. Split into parallel background jobs of ≤15 tickers each.
+- **Massive grouped endpoint for bulk scans**: Instead of calling per-ticker OHLCV, use `GET /v2/aggs/grouped/locale/us/market/stocks/{date}` to get all 12K+ US stocks in one call. Filter client-side for volume, % change, dollar volume. This is free-tier friendly (1 call vs thousands).
 - **POET trap**: >60% accuracy on short-history stocks is almost certainly overfit.
 - **Yahoo rate limits**: YFinance 429s after ~5 rapid requests. Use Alpaca for batch scans.
 - **Empty Alpaca response**: Can happen if ticker delisted or no data in range.

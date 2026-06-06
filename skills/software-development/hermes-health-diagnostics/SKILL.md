@@ -555,6 +555,8 @@ else:
 - Memory: > 500MB available
 - Gateway processes: ≥ 1 running process
 
+**When disk exceeds 80%:** Load the `mrclean` skill and follow `references/vps-disk-cleanup.md` for systematic cleanup. Key targets in order: `~/.npm/_npx/` (1-3GB, NOT cleared by npm cache clean), pnpm store prune, unused packages in `~/.hermes/node/lib/node_modules/` (verify no systemd service references first), old venvs, .rustup if unused, Docker prune, journal vacuum.
+
 ## Troubleshooting Flowchart
 
 1. **Gateway not responding?**

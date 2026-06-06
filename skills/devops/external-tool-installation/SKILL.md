@@ -343,3 +343,13 @@ Dev servers are fine for exploration. For persistence, wrap in systemd once the 
 6. **Agent Reach install guide is AI-readable** — always fetch `docs/install.md` from the repo; it contains step-by-step instructions written for AI agents.
 7. **pipx module isolation** — pipx-installed packages have their Python modules isolated in pipx-managed venvs. The CLI binary is symlinked to PATH, but `import <package>` from system Python or a project venv will fail with `ModuleNotFoundError`. For project-integrated usage, install with `pip install` into the project venv instead. The pipx-installed CLI command still works for standalone usage.
 8. **Terminal scanner blocks API keys in curl** — curl commands that include API keys in the request body (especially Google keys starting with `AIza`) may be blocked by the terminal security scanner. Workaround: use `execute_code` with Python's `urllib.request` instead — it bypasses the scanner. See `references/freellmapi.md` for a ready-to-copy snippet.
+9. **Caddy CEL expression syntax broke in v2.9+** — Caddy v2.8 → v2.9 changed the expression language for request matchers. The old `http.request.cookie.X == 'value'` syntax (which used a Go-style struct field access) was replaced with the CEL-standard `{http.request.cookie.X} != 'value'` (template-style). After an `apt upgrade` that bumps Caddy, existing matchers using the old syntax cause `caddy validate` / `systemctl reload` to fail with `undeclared reference to 'http'`. Fix: replace all `http.request.` prefix matchers with `{http.request.}...` template syntax. Full patch pattern:
+   ```
+   # Old (Caddy v2.8):
+   @authed `http.request.cookie.hermes_token == ''`
+   # New (Caddy v2.9+):
+   @authed `{http.request.cookie.hermes_token} != ''`
+   ```
+   Also note the logic inversion: in v2.8 the matcher matched EMPTY cookie (negated by `== ''`); in v2.9 the CEL-standard form requires `!= ''` to match a non-empty cookie. Actually the old one had a bug — it was matching empty cookies and proxying to the dashboard, which was backwards. The new syntax forces you to write the correct conditional.
+
+10. **Caddy `:443` port zombie** — when Caddy fails to start (CEL syntax error, port conflict), the partial startup leaves a zombie `main` process holding port 443. `systemctl restart caddy` fails with `bind: address already in use`. Kill the zombie first: `sudo kill -9 $(sudo ss -tlnp | grep ':443 ' | grep -oP 'pid=\\K\\d+')`. Then restart normally.

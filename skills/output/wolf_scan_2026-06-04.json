@@ -1,0 +1,126 @@
+{
+  "metadata": {
+    "scan_time": "2026-06-04T08:00:21.121343",
+    "scanner": "full",
+    "reddit_posts": 10,
+    "reddit_time": 2.6,
+    "twitter_tweets": 0,
+    "twitter_time": 1.3,
+    "news_articles": 2,
+    "news_time": 46.6,
+    "signals_found": 3
+  },
+  "signals": [
+    {
+      "ticker": "RDDT",
+      "mentions": 10,
+      "sources": [
+        "reddit"
+      ],
+      "total_sentiment": -0.7,
+      "sentiment_count": 10,
+      "reddit_score": 0,
+      "reddit_mentions": 10,
+      "twitter_mentions": 0,
+      "news_mentions": 0,
+      "top_posts": [
+        {
+          "text": "r/wallstreetbets - Reddit",
+          "source": "reddit",
+          "subreddit": "wallstreetbets",
+          "score": 0,
+          "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2F&amp;rut=2b005617cf91a5637f9a65ba49cd03eaf3d34d6bd6c854d0766eac6d8ed63639"
+        },
+        {
+          "text": "It&#x27;s Finally Over\u2026 : r/wallstreetbets - Reddit",
+          "source": "reddit",
+          "subreddit": "wallstreetbets",
+          "score": 0,
+          "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2F1am35gz%2Fits_finally_over%2F&amp;rut=618d4e5cdf39c4c1cc981aabb5a6bd22deeb0fe7057812267e0f55b29f4429cd"
+        },
+        {
+          "text": "Welcome to Wallstreetbets : r/wallstreetbets - Reddit",
+          "source": "reddit",
+          "subreddit": "wallstreetbets",
+          "score": 0,
+          "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2Fmt0ac4%2Fwelcome_to_wallstreetbets%2F&amp;rut=82f50a955175f348021a54dfdaa55522991acf12ab75f214cd0c524806d70a88"
+        }
+      ],
+      "reddit_urls": [
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2F&amp;rut=2b005617cf91a5637f9a65ba49cd03eaf3d34d6bd6c854d0766eac6d8ed63639",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2F1am35gz%2Fits_finally_over%2F&amp;rut=618d4e5cdf39c4c1cc981aabb5a6bd22deeb0fe7057812267e0f55b29f4429cd",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2Fmt0ac4%2Fwelcome_to_wallstreetbets%2F&amp;rut=82f50a955175f348021a54dfdaa55522991acf12ab75f214cd0c524806d70a88",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2Fnwzl7d%2Fwsb_discussion_today%2F&amp;rut=67c175dccf538913046dd98a6420e1b088a48ad60daf2858146a79a4468f5058",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2F14b963y%2Fmy_lifes_over_heres_my_final_advice%2F&amp;rut=6d2fc82fdaa2023c356aa85020947bf3cd916aa46cfd8cc396c3a9bf74a4186a",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2F1cqphbu%2Foh_we_are_so_back%2F&amp;rut=4c21ed5d5e5735d1d6a23f8a5dade7e1fe7c37be3f8cf50f4187d84b337086a6",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2F19b0k67%2F8_million2500_gain_in_2_months_20_million5000%2F&amp;rut=d2981c2470d5533124ee5c9aa2be21ba3ebb8d437020571fee19c92b3010c452",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2Fqlscp1%2Fcan_wallstreetbets_beat_the_market_i_analyzed%2F&amp;rut=b236e55dee51154d49a67172f62816b07c0208277fec83199209fd05236ad51c",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2Fqdpchl%2Ftoday%2F&amp;rut=24c290255e88d8272575c4f8a47388125de1d28837126184d342342739c8026c",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2F16vo3s7%2Fmy_loss_today_and_advice_for_others%2F&amp;rut=117332d2ad33c762263ba46a5c1eae5f7f70415da974314d9630a1efd22a2433"
+      ],
+      "score": 0.233,
+      "tier": "\u26aa NEUTRAL",
+      "avg_sentiment": -0.07,
+      "velocity": 1,
+      "company_name": "Reddit"
+    },
+    {
+      "ticker": "GME",
+      "mentions": 5,
+      "sources": [
+        "reddit"
+      ],
+      "total_sentiment": -0.10000000000000003,
+      "sentiment_count": 5,
+      "reddit_score": 0,
+      "reddit_mentions": 5,
+      "twitter_mentions": 0,
+      "news_mentions": 0,
+      "top_posts": [
+        {
+          "text": "Welcome to Wallstreetbets : r/wallstreetbets - Reddit",
+          "source": "reddit",
+          "subreddit": "wallstreetbets",
+          "score": 0,
+          "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2Fmt0ac4%2Fwelcome_to_wallstreetbets%2F&amp;rut=82f50a955175f348021a54dfdaa55522991acf12ab75f214cd0c524806d70a88"
+        },
+        {
+          "text": "oh we are so back : r/wallstreetbets - Reddit",
+          "source": "reddit",
+          "subreddit": "wallstreetbets",
+          "score": 0,
+          "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2F1cqphbu%2Foh_we_are_so_back%2F&amp;rut=4c21ed5d5e5735d1d6a23f8a5dade7e1fe7c37be3f8cf50f4187d84b337086a6"
+        }
+      ],
+      "reddit_urls": [
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2Fmt0ac4%2Fwelcome_to_wallstreetbets%2F&amp;rut=82f50a955175f348021a54dfdaa55522991acf12ab75f214cd0c524806d70a88",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2F1cqphbu%2Foh_we_are_so_back%2F&amp;rut=4c21ed5d5e5735d1d6a23f8a5dade7e1fe7c37be3f8cf50f4187d84b337086a6"
+      ],
+      "score": 0.128,
+      "tier": "\u26aa NEUTRAL",
+      "avg_sentiment": -0.02,
+      "velocity": 1,
+      "company_name": "Gamestop"
+    },
+    {
+      "ticker": "SNAP",
+      "mentions": 3,
+      "sources": [
+        "news"
+      ],
+      "total_sentiment": 0.30000000000000004,
+      "sentiment_count": 3,
+      "reddit_score": 0,
+      "reddit_mentions": 0,
+      "twitter_mentions": 0,
+      "news_mentions": 3,
+      "top_posts": [],
+      "reddit_urls": [],
+      "score": 0.08,
+      "tier": "\u26aa NEUTRAL",
+      "avg_sentiment": 0.1,
+      "velocity": 1,
+      "company_name": "Snapchat"
+    }
+  ]
+}

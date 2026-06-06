@@ -1,9 +1,9 @@
 {
-  "last_report_path": "/home/ubuntu/.hermes/logs/curator/20260529-094748",
-  "last_run_at": "2026-05-29T09:47:48.390983+00:00",
-  "last_run_duration_seconds": 421.073555,
-  "last_run_summary": "auto: no changes; llm: The consolidation is complete. Here's the summary:\n\n## Consolidation Pass Summary\n\n**Candidate pool:** 9 agent-created skills (1 pinned, skipped)\n**Processed:** 8 skills\n**Consolidations:** 1\n**Prunings:** 0\n**Kept as-is:** 7\n\n### What was …\narchived 1 skill(s):\n  • together-ai-integration → image-generation\nfull report: hermes curator status\nkeep an umbrella stable: hermes curator pin image-generation",
-  "last_run_summary_shown_at": "2026-05-22T09:26:34.837946+00:00",
+  "last_report_path": "/home/ubuntu/.hermes/logs/curator/20260605-101321",
+  "last_run_at": "2026-06-05T10:13:21.367986+00:00",
+  "last_run_duration_seconds": 351.416357,
+  "last_run_summary": "auto: no changes; llm: Good — 10 skills archived in this pass (some consolidated, some pruned). Let me write the summary.\n\n---\n\n## Human Summary\n\n### Clusters Processed\n\n**1. Hermes Dashboard (2 skills → 1)**\n- `hermes-dashboard-customization` + `hermes-dashboard…\narchived 6 skill(s):\n  • hermes-dashboard-ops → hermes-dashboard-customization\n  • apple-notes — pruned (stale)\n  • apple-reminders — pruned (stale)\n  • findmy — pruned (stale)\n  • imessage — pruned (stale)\n  • macos-computer-use — pruned (stale)\nfull report: hermes curator status\nkeep an umbrella stable: hermes curator pin hermes-dashboard-customization",
+  "last_run_summary_shown_at": "2026-06-05T10:13:21.367986+00:00",
   "paused": false,
-  "run_count": 6
+  "run_count": 7
 }

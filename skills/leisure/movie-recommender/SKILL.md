@@ -46,14 +46,40 @@ Search for:
 
 **Step 4:** If you can't find streaming info via search, check `web_extract` on Wikipedia (short, clean) or JustWatch for the film.
 
-### Fallback: Terminal-Based Research (when web_search/web_extract are unavailable)
+### Fallback: Browser-Based Research (primary — use when web_search/web_extract unavailable)
 
-When the subscription-dependent tools (`web_search`, `web_extract`, `browser`) are all down, pivot to terminal-based web research:
+When the subscription-dependent tools are down, use the browser tool for research. This is the most reliable path from VPS IPs:
+
+**Step 1 — Curation sites (browser_navigate):** Load known editorial/curation articles directly:
+- `editorialge.com/hidden-gem-streaming-movies-spring-2026/` — seasonal hidden gem roundups
+- `editorialge.com` search for "hidden gem" or "underrated" articles
+- `rottentomatoes.com/search?search=...` — RT search returns film cards with scores, cast, and streaming dates
+
+**Step 2 — Score verification (browser_navigate):** Navigate to `rottentomatoes.com/search?search=[Film Title] [Year]`. The search results show Tomatometer scores, cast, and sometimes the streaming date directly in the card. No need to load the full film page.
+
+**Step 3 — Streaming verification:** RT search cards often show the streaming platform. If not, navigate to the film's Wikipedia page (clean, fast-loading) or search `rottentomatoes.com/search?search=[Film Title] streaming`.
+
+**Step 4 — Extract article text (browser_console):** For long articles, use `document.querySelector('main')?.innerText?.substring(0, 8000)` or `document.querySelector('.entry-content')?.innerText?.substring(0, 8000)` in browser_console to get the full text at once.
+
+**Proven source sites that load reliably:**
+- `editorialge.com` — seasonal hidden gem roundups, good detail (director, cast, premise, streaming platform)
+- `rottentomatoes.com/search` — score + cast + streaming info in search cards
+- `en.wikipedia.org/wiki/2026_in_film` — box office + notable releases
+- `en.wikipedia.org/wiki/List_of_American_films_of_2026` — chronological release tables
+
+Full list of tested URLs and extraction techniques: see `references/browser-research-sources.md`.
+
+### Fallback: Terminal-Based Research (last resort — DDG Lite blocks VPS IPs)
+
+**⚠️ DDG Lite now captcha-blocks from VPS/datacenter IPs after 1-3 queries.** Prefer browser-based research above. Only use this fallback when the browser tool is also unavailable.
+
+When both web_search/web_extract AND the browser are all down:
 
 **Search via DuckDuckGo Lite:**
 ```bash
 curl -s -A "Mozilla/5.0" -d "q=your+search+query&df=m" "https://lite.duckduckgo.com/lite/" -o /tmp/ddg.html
 ```
+- Results may be empty (captcha page). Check: `grep -c 'result-link' /tmp/ddg.html`. If 0, try the browser-based approach or a different query.
 - Use POST (`-d`), not GET — DDG Lite requires it.
 - `df=m` limits to past month. Use `df=w` for past week, omit for all time.
 - Results appear as `<a class='result-link'>` and `<td class='result-snippet'>` elements.
@@ -96,10 +122,11 @@ for l in e.t:
 
 ## Pitfalls
 
+- **VPS IP blocking on search engines:** DDG Lite and DDG HTML search now captcha-block from datacenter/VPS IPs after 1-3 queries. Google search blocks outright. Metacritic has Cloudflare bot detection. **Do not depend on terminal-based search engines as your primary research path.** Use the browser tool instead — it's the most reliable way to reach editorial sites, Rotten Tomatoes search, and curation pages from this environment.
 - **web_extract timeout:** Large pages (Rotten Tomatoes, Variety, IndieWire) routinely trigger auxiliary model timeouts. Don't depend on them. Lean on search snippets for scores and quotes — they're faster and more reliable.
 - **Theater-only films:** If a film is only in theaters, skip it. "Where to watch" must be a streaming platform Dwayne can access now. If you can't confirm streaming availability, move to the next candidate.
 - **Stale data:** Scores change. Prefer snippets from search results (dated) over cached knowledge. Verify the streaming platform is current.
-- **Security scanner blocks `curl | python3`:** Always save curl output to a temp file (`-o /tmp/file`) first, then process the file separately. Piping directly to an interpreter triggers a HIGH-severity block.
+- **Rotten Tomatoes browse pages are alphabetical:** The "Movies to Stream at Home" and "Movies on Netflix" pages sort films alphabetically even when you select "Tomatometer (Highest)" — old films from 2010-2020 appear first. Use RT **search** (`rottentomatoes.com/search?search=...`) instead, or navigate directly to known curation articles.
 - **Wikipedia API rate-limiting:** Rapid sequential API calls return 228-byte error pages. Space calls apart or batch sections into a single `for` loop with brief pauses.
 
 ## Selection Criteria

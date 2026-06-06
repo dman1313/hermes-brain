@@ -1,0 +1,105 @@
+# Natural Light Theme — Working Example
+
+Copy to `~/.hermes/dashboard-themes/natural.yaml` and customize.
+
+This theme uses Strategy B (dark midground for readability) with explicit
+`colorOverrides` to pin all shadcn tokens. Tested on Hermes v0.15.1.
+
+```yaml
+name: natural
+label: Natural
+description: Clean white workspace with forest green accents. Dark readable text, generous spacing.
+
+palette:
+  background:
+    hex: "#ffffff"
+    alpha: 1.0
+  midground:
+    hex: "#1a1816"       # Near-black for readable text (Strategy B)
+    alpha: 1.0
+  foreground:
+    hex: "#ffffff"
+    alpha: 0.0
+  warmGlow: "rgba(193, 127, 89, 0.12)"
+  noiseOpacity: 0.15
+
+typography:
+  fontSans: "Inter, system-ui, sans-serif"
+  fontMono: "JetBrains Mono, ui-monospace, monospace"
+  fontDisplay: "Inter, system-ui, sans-serif"
+  fontUrl: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap"
+  baseSize: "15px"
+  lineHeight: "1.55"
+  letterSpacing: "0"
+
+layout:
+  radius: "0.75rem"
+  density: comfortable
+
+colorOverrides:
+  primary: "#3d7a4f"
+  primaryForeground: "#ffffff"
+  secondary: "#f5f3ef"
+  secondaryForeground: "#1a1816"
+  muted: "#f0ece6"
+  mutedForeground: "#6b6560"
+  accent: "#3d7a4f"
+  accentForeground: "#ffffff"
+  destructive: "#c47d7d"
+  destructiveForeground: "#ffffff"
+  success: "#3d7a4f"
+  warning: "#d4a843"
+  border: "#e2ddd5"
+  input: "#e2ddd5"
+  ring: "#3d7a4f"
+  card: "#ffffff"
+  cardForeground: "#1a1816"
+  popover: "#ffffff"
+  popoverForeground: "#1a1816"
+
+componentStyles:
+  card:
+    boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04)"
+    borderRadius: "12px"
+  header:
+    background: "rgba(255,255,255,0.85)"
+    backdropFilter: "blur(20px)"
+    borderBottom: "1px solid #e2ddd5"
+  sidebar:
+    background: "rgba(255,255,255,0.9)"
+    backdropFilter: "blur(16px)"
+    borderRight: "1px solid #e2ddd5"
+  badge:
+    borderRadius: "6px"
+  progress:
+    color: "#3d7a4f"
+    background: "#e2ddd5"
+
+customCSS: |
+  /* Full customCSS available in the live theme at ~/.hermes/dashboard-themes/natural.yaml */
+  /* Key sections: sidebar, kanban columns, kanban cards, global buttons/inputs/scrollbars */
+```
+
+## Color Palette Reference
+
+| Token | Hex | Usage |
+|-------|-----|-------|
+| primary | #3d7a4f | Buttons, links, active states, assignee badges |
+| destructive | #c47d7d | Errors, unassigned, stale-red cards |
+| warning | #d4a843 | Amber warnings, stale-amber cards, Ready column |
+| mutedForeground | #6b6560 | Secondary text, metadata |
+| border | #e2ddd5 | Card borders, dividers, inputs |
+| card | #ffffff | Card backgrounds |
+| background | #ffffff | Page background |
+
+## Kanban Column Colors
+
+| Column | Dot Color | Left Border |
+|--------|-----------|-------------|
+| Triage | #9b7eb5 (purple) | 3px solid #9b7eb5 |
+| Todo | #7a9eb5 (blue) | 3px solid #7a9eb5 |
+| Scheduled | #d4a843 (amber) | 3px solid #d4a843 |
+| Ready | #3d7a4f (green) | 3px solid #3d7a4f |
+| Running | #3d7a4f (green, pulse) | 3px solid #3d7a4f |
+| Blocked | #c47d7d (red) | 3px solid #c47d7d |
+| Done | #6b9e7a (sage) | 3px solid #6b9e7a |

@@ -1,12 +1,36 @@
 model:
+  base_url: https://token-plan-ams.xiaomimimo.com/v1
   default: mimo-v2.5-pro
   provider: xiaomi
-  base_url: https://token-plan-ams.xiaomimimo.com/v1
 providers:
+  deepseek:
+    base_url: https://api.deepseek.com/v1
+    models:
+      deepseek-chat:
+        context_window: 131072
+        max_tokens: 8192
+        reasoning: false
+      deepseek-reasoner:
+        context_window: 65536
+        max_tokens: 8192
+        reasoning: true
+      deepseek-v4-flash:
+        context_window: 1048576
+        max_tokens: 32768
+        reasoning: true
+      deepseek-v4-pro:
+        context_window: 1048576
+        max_tokens: 32768
+        reasoning: true
   xiaomi:
     base_url: https://token-plan-ams.xiaomimimo.com/v1
     models:
-      mimo-v2.5-pro:
+      mimo-v2-omni:
+        context_window: 262144
+        max_tokens: 131072
+        reasoning: true
+        vision: true
+      mimo-v2-pro:
         context_window: 1048576
         max_tokens: 131072
         reasoning: true
@@ -15,33 +39,9 @@ providers:
         max_tokens: 131072
         reasoning: true
         vision: true
-      mimo-v2-pro:
+      mimo-v2.5-pro:
         context_window: 1048576
         max_tokens: 131072
-        reasoning: true
-      mimo-v2-omni:
-        context_window: 262144
-        max_tokens: 131072
-        reasoning: true
-        vision: true
-  deepseek:
-    base_url: https://api.deepseek.com/v1
-    models:
-      deepseek-reasoner:
-        context_window: 65536
-        max_tokens: 8192
-        reasoning: true
-      deepseek-chat:
-        context_window: 131072
-        max_tokens: 8192
-        reasoning: false
-      deepseek-v4-pro:
-        context_window: 1048576
-        max_tokens: 32768
-        reasoning: true
-      deepseek-v4-flash:
-        context_window: 1048576
-        max_tokens: 32768
         reasoning: true
 fallback_providers:
 - deepseek
@@ -58,6 +58,7 @@ agent:
   tool_use_enforcement: auto
   task_completion_guidance: true
   environment_probe: true
+  environment_hint: ''
   gateway_timeout_warning: 900
   clarify_timeout: 600
   gateway_notify_interval: 600
@@ -129,8 +130,8 @@ terminal:
   docker_extra_args: []
   docker_run_as_host_user: false
   persistent_shell: true
-  vercel_runtime: node24
   lifetime_seconds: 300
+  vercel_runtime: node24
 web:
   backend: firecrawl
   search_backend: ''
@@ -286,21 +287,21 @@ auxiliary:
     \1: [REDACTED]
     timeout: 600
     extra_body: {}
-  session_search:
-    provider: auto
-    model: ''
-    base_url: ''
+  flush_memories:
     \1: [REDACTED]
+    base_url: ''
+    extra_body: {}
+    model: ''
+    provider: auto
     timeout: 30
+  session_search:
+    \1: [REDACTED]
+    base_url: ''
     extra_body: {}
     max_concurrency: 3
-  flush_memories:
-    provider: auto
     model: ''
-    base_url: ''
-    \1: [REDACTED]
+    provider: auto
     timeout: 30
-    extra_body: {}
 display:
   compact: false
   personality: kawaii
@@ -311,7 +312,9 @@ display:
   resume_max_assistant_lines: 3
   resume_skip_tool_only: true
   busy_input_mode: interrupt
+  interface: cli
   tui_auto_resume_recent: false
+  tui_agents_nudge: true
   bell_on_complete: false
   show_reasoning: true
   streaming: true
@@ -321,6 +324,7 @@ display:
   persistent_output_max_lines: 200
   inline_diffs: true
   file_mutation_verifier: true
+  turn_completion_explainer: true
   show_cost: false
   skin: default
   language: en
@@ -333,7 +337,11 @@ display:
   tool_progress_overrides: {}
   tool_preview_length: 0
   ephemeral_system_ttl: 0
-  platforms: {}
+  platforms:
+    telegram:
+      streaming: true
+    discord:
+      streaming: false
   runtime_footer:
     enabled: false
     fields:
@@ -349,6 +357,12 @@ dashboard:
   oauth:
     client_id: ''
     portal_url: ''
+  basic_auth:
+    username: ''
+    password_hash: ''
+    \1: [REDACTED]
+    \1: [REDACTED]
+    session_ttl_seconds: 0
   public_url: ''
 privacy:
   redact_pii: false
@@ -377,11 +391,11 @@ tts:
     device: cpu
   piper:
     voice: en_US-lessac-medium
+  use_gateway: true
   xiaomi:
+    format: wav
     model: mimo-v2.5-tts
     voice: Mia
-    format: wav
-  use_gateway: true
 stt:
   enabled: true
   provider: local
@@ -392,6 +406,11 @@ stt:
     model: whisper-1
   mistral:
     model: voxtral-mini-latest
+  elevenlabs:
+    model_id: scribe_v2
+    language_code: ''
+    tag_audio_events: false
+    diarize: false
 voice:
   record_\1: [REDACTED]
   max_recording_seconds: 120
@@ -451,12 +470,13 @@ curator:
   min_idle_hours: 2
   stale_after_days: 30
   archive_after_days: 90
+  prune_builtins: true
   backup:
     enabled: true
     keep: 5
   auxiliary:
-    provider: null
     model: null
+    provider: null
 honcho: {}
 timezone: ''
 slack:
@@ -478,6 +498,20 @@ discord:
   server_actions: ''
   allow_any_attachment: false
   max_attachment_bytes: 33554432
+  voice_fx:
+    enabled: false
+    ambient_enabled: true
+    ambient_path: ''
+    ambient_gain: 0.18
+    duck_gain: 0.06
+    speech_gain: 1.0
+    ack_enabled: true
+    ack_phrases:
+    - Let me look into that.
+    - One moment.
+    - Checking on that now.
+    - Give me a sec.
+    - On it.
 whatsapp: {}
 telegram:
   reactions: false
@@ -500,17 +534,19 @@ approvals:
   destructive_slash_confirm: true
 command_allowlist:
 - pipe remote content to shell
-- stop/restart system service
-- copy/move file into /etc/
-- overwrite project env/config via redirection
-- hermes update (restarts gateway, kills running agents)
-- stop/restart hermes gateway (kills running agents)
-- script execution via -e/-c flag
-- shell command via -c/-lc flag
-- delete in root path
-- script execution via heredoc
-- overwrite system file via tee
 - recursive delete
+- overwrite project env/config via redirection
+- stop/restart system service
+- delete in root path
+- script execution via -e/-c flag
+- overwrite system file via redirection
+- SQL TRUNCATE
+- copy/move file into /etc/
+- hermes update (restarts gateway, kills running agents)
+- overwrite system file via tee
+- stop/restart hermes gateway (kills running agents)
+- script execution via heredoc
+- shell command via -c/-lc flag
 quick_commands: {}
 hooks: {}
 hooks_auto_accept: false
@@ -537,7 +573,7 @@ kanban:
   failure_limit: 2
   worker_log_rotate_bytes: 2097152
   worker_log_backup_count: 1
-  orchestrator_profile: ''
+  orchestrator_profile: hal
   default_assignee: ''
   max_in_progress_per_profile: null
   auto_decompose: true
@@ -547,6 +583,12 @@ code_execution:
   mode: project
   max_tool_calls: 50
   timeout: 300
+tools:
+  tool_search:
+    enabled: auto
+    threshold_pct: 10
+    search_default_limit: 5
+    max_search_limit: 20
 logging:
   level: INFO
   max_size_mb: 5
@@ -557,7 +599,7 @@ logging:
 model_catalog:
   enabled: true
   url: https://hermes-agent.nousresearch.com/docs/api/model-catalog.json
-  ttl_hours: 24
+  ttl_hours: 1
   providers: {}
 network:
   force_ipv4: false
@@ -566,6 +608,13 @@ gateway:
   media_delivery_allow_dirs: []
   trust_recent_files: true
   trust_recent_files_seconds: 600
+streaming:
+  enabled: false
+  transport: auto
+  edit_interval: 0.8
+  buffer_threshold: 24
+  cursor: " \u2589"
+  fresh_final_after_seconds: 60.0
 sessions:
   auto_prune: true
   retention_days: 90
@@ -575,11 +624,12 @@ sessions:
 onboarding:
   seen:
     busy_input_prompt: true
-    tool_progress_prompt: true
     openclaw_residue_cleanup: true
+    tool_progress_prompt: true
 updates:
   pre_update_backup: false
   backup_keep: 5
+  non_interactive_local_changes: stash
 lsp:
   enabled: true
   wait_mode: document
@@ -602,18 +652,17 @@ secrets:
 paste_collapse_threshold: 5
 paste_collapse_threshold_fallback: 0
 paste_collapse_char_threshold: 2000
-_config_version: 24
+_config_version: 27
 custom_providers:
-- name: perceptron
+- \1: [REDACTED]
   base_url: https://api.perceptron.inc/v1
-  \1: [REDACTED]
   models:
   - isaac-0.2-2b-preview
   - isaac-0.2-1b
   - perceptron-mk1
-- name: together
+  name: perceptron
+- \1: [REDACTED]
   base_url: https://api.together.xyz/v1
-  \1: [REDACTED]
   models:
   - deepseek-ai/DeepSeek-V4-Pro
   - zai-org/GLM-5.1
@@ -621,17 +670,82 @@ custom_providers:
   - Qwen/Qwen3.6-Plus
   - Qwen/Qwen3.7-Max
   - meta-llama/Llama-4-Maverick
+  name: together
 fallback_model:
-  provider: deepseek
   model: deepseek-chat
-smart_model_routing:
-  enabled: false
-  max_simple_chars: 300
-  max_simple_words: 50
-  cheap_model:
-    model: deepseek-chat
-    provider: deepseek
+  provider: deepseek
 group_sessions_per_user: true
+image_gen:
+  \1: [REDACTED]
+  base_url: https://api.together.xyz/v1
+  model: fal-ai/flux/schnell
+  provider: fal
+  use_gateway: false
+known_plugin_toolsets:
+  cli:
+  - spotify
+  discord:
+  - spotify
+  telegram:
+  - spotify
+mcp_servers:
+  codegraph:
+    args:
+    - serve
+    - --mcp
+    command: codegraph
+    connect_timeout: 60
+    enabled: true
+    timeout: 120
+  glms-reader:
+    headers:
+      Authorization: Bearer b9ed82cb71bd410e8cff52ff1411f673.XId8cqfQXhjGe084
+    url: https://api.z.ai/api/mcp/web_reader/mcp
+  glms-search:
+    headers:
+      Authorization: Bearer b9ed82cb71bd410e8cff52ff1411f673.XId8cqfQXhjGe084
+    url: https://api.z.ai/api/mcp/web_search_prime/mcp
+  glms-vision:
+    args:
+    - -y
+    - '@z_ai/mcp-server@latest'
+    command: npx
+    env:
+      Z_AI_\1: [REDACTED]
+      Z_AI_MODE: coding
+  glms-zread:
+    headers:
+      Authorization: Bearer b9ed82cb71bd410e8cff52ff1411f673.XId8cqfQXhjGe084
+    url: https://api.z.ai/api/mcp/zread/mcp
+  openspace:
+    command: openspace-mcp
+    enabled: false
+    env:
+      OPENSPACE_WORKSPACE: /tmp/OpenSpace
+  ruflo:
+    args:
+    - -y
+    - ruflo
+    - mcp
+    - start
+    command: npx
+    connect_timeout: 120
+    enabled: true
+    env:
+      CLAUDE_FLOW_HOOKS_ENABLED: 'true'
+      CLAUDE_FLOW_MAX_AGENTS: '8'
+      CLAUDE_FLOW_MEMORY_BACKEND: hybrid
+      CLAUDE_FLOW_MODE: v3
+      CLAUDE_FLOW_TOPOLOGY: hierarchical-mesh
+    timeout: 180
+  scrapling:
+    args:
+    - mcp
+    command: scrapling
+    enabled: true
+  together-docs:
+    enabled: true
+    url: https://docs.together.ai/mcp
 platform_toolsets:
   cli:
   - browser
@@ -655,6 +769,27 @@ platform_toolsets:
   - vision
   - web
   - x_search
+  - mcp-codegraph
+  discord:
+  - browser
+  - clarify
+  - code_execution
+  - cronjob
+  - delegation
+  - file
+  - image_gen
+  - memory
+  - messaging
+  - moa
+  - rl
+  - session_search
+  - skills
+  - spotify
+  - terminal
+  - todo
+  - tts
+  - vision
+  - web
   homeassistant:
   - hermes-homeassistant
   signal:
@@ -683,91 +818,29 @@ platform_toolsets:
   - web
   whatsapp:
   - hermes-whatsapp
-  discord:
-  - browser
-  - clarify
-  - code_execution
-  - cronjob
-  - delegation
-  - file
-  - image_gen
-  - memory
-  - messaging
-  - moa
-  - rl
-  - session_search
-  - skills
-  - spotify
-  - terminal
-  - todo
-  - tts
-  - vision
-  - web
-session_reset:
-  at_hour: 4
-  idle_minutes: 1440
-  mode: both
-streaming:
-  enabled: false
-plugins:
-  enabled:
-  - image_gen/fal
-  - image_gen/openai
-  - superpowers
-  disabled: []
-mcp_servers:
-  openspace:
-    command: openspace-mcp
-    env:
-      OPENSPACE_WORKSPACE: /tmp/OpenSpace
-    enabled: false
-  glms-search:
-    url: https://api.z.ai/api/mcp/web_search_prime/mcp
-    headers:
-      Authorization: Bearer b9ed82cb71bd410e8cff52ff1411f673.XId8cqfQXhjGe084
-  glms-reader:
-    url: https://api.z.ai/api/mcp/web_reader/mcp
-    headers:
-      Authorization: Bearer b9ed82cb71bd410e8cff52ff1411f673.XId8cqfQXhjGe084
-  glms-vision:
-    command: npx
-    args:
-    - -y
-    - '@z_ai/mcp-server@latest'
-    env:
-      Z_AI_\1: [REDACTED]
-      Z_AI_MODE: coding
-  glms-zread:
-    url: https://api.z.ai/api/mcp/zread/mcp
-    headers:
-      Authorization: Bearer b9ed82cb71bd410e8cff52ff1411f673.XId8cqfQXhjGe084
-  scrapling:
-    command: scrapling
-    args:
-    - mcp
-    enabled: true
-  together-docs:
-    url: https://docs.together.ai/mcp
-    enabled: true
-known_plugin_toolsets:
-  cli:
-  - spotify
-  telegram:
-  - spotify
-  discord:
-  - spotify
-image_gen:
-  use_gateway: false
-  provider: fal
-  \1: [REDACTED]
-  base_url: https://api.together.xyz/v1
-  model: fal-ai/flux/schnell
 platforms:
+  telegram:
+    enabled: true
   webhook:
     enabled: true
     extra:
       host: 0.0.0.0
       port: 8644
       \1: [REDACTED]
-  telegram:
-    enabled: true
+plugins:
+  disabled: []
+  enabled:
+  - image_gen/fal
+  - image_gen/openai
+  - superpowers
+session_reset:
+  at_hour: 4
+  idle_minutes: 1440
+  mode: both
+smart_model_routing:
+  cheap_model:
+    model: deepseek-chat
+    provider: deepseek
+  enabled: false
+  max_simple_chars: 300
+  max_simple_words: 50

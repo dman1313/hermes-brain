@@ -105,6 +105,9 @@ Signal dict format:
 
 ## Architecture Notes
 
+### Options data reference
+See `references/options-data-patterns.md` for working code patterns, field names, and free tier limitations for options chain queries.
+
 ### Modular source architecture
 The bot is designed to layer in additional data sources (Reddit, Twitter/X, News):
 - Each source is an independent scanner module
@@ -114,15 +117,42 @@ The bot is designed to layer in additional data sources (Reddit, Twitter/X, News
 ### Pitfalls
 
 - **Free tier data limits**: The free paper account does NOT include minute-level bar data. StockBarsRequest with TimeFrame.Minute returns 403: subscription does not permit querying recent SIP data. Workaround: use StockLatestQuoteRequest for real-time prices and bid/ask. Daily bars may work; test before building strategy around intraday data.
-### Pitfalls
-
 - **Alpaca SDK relative imports**: `config.py`, `data.py`, `trading.py`, and `notify.py` use flat imports (`from config import ...`), NOT relative imports. If restructuring as a package, change to relative imports.
 - **Market hours**: Alpaca data API returns empty bars outside market hours. `run.py` handles this gracefully but produces no signals.
 - **Alpaca-py vs alpaca-trade-api**: This project uses `alpaca-py` (the newer v2 SDK), NOT the deprecated `alpaca-trade-api` package.
 - **Day trade limits**: Paper accounts are not subject to PDT rules, but switching to live requires attention to pattern day trader rules for accounts under $25K.
 - **Telegram alert failures**: If Telegram is unconfigured, `notify.py` silently returns `{"sent": false, "reason": "Telegram not configured"}` — no crash.
-- **Free tier data limits**: `StockBarsRequest` with minute-level timeframe returns 403 `"subscription does not permit querying recent SIP data"`. The free tier only supports quotes (`StockLatestQuoteRequest`) and daily bars. For volume analysis, use `StockLatestTradeRequest` or daily bars.
+- **Free tier data limits**: `StockBarsRequest` returns 403 on free tier for ALL timeframes (including daily): "subscription does not permit querying recent SIP data". Use `StockSnapshotRequest` instead for stock prices and volume. See `references/options-data-patterns.md` for the full data availability matrix.
+- **StockSnapshotRequest is the best free-tier data source**: Returns `daily_bar` with OHLCV volume, plus `latest_trade` with real-time price. Does NOT have `prev_daily_bar` on free tier (AttributeError), so volume ratio vs previous day cannot be computed from this endpoint alone.
+- **ContractType enum, NOT a string**: `c.type` returns `ContractType.CALL` (enum). `str(c.type)` returns `"ContractType.CALL"`, not `"call"`. Use `'call' in str(c.type).lower()` for comparisons.
+- **OptionSnapshotRequest > OptionLatestQuoteRequest for options data**: Snapshots return Greeks, IV, bid/ask, and last trade for BOTH calls and puts. `OptionLatestQuoteRequest` returns empty for puts on free tier. See `references/options-data-patterns.md`.
+- **OptionsSnapshot has NO daily_bar on free tier**: No options volume or open interest available. Only Greeks, IV, quotes, and last trade. For options volume, need paid feed (Barchart, Unusual Whales, CBOE).
 - **Options trading**: Paper accounts get Options Level 3. Single-leg option orders work via `MarketOrderRequest` with option contract symbols (e.g., `AAPL260508P00275000`). Naked call selling is blocked (403 — "account not eligible to trade uncovered option contracts"). Multi-leg/spread orders NOT supported via API. Option contracts looked up with `GetOptionContractsRequest` filtering by underlying, expiration, type, and strike range.
+- **Options SDK response type**: `client.get_option_contracts(req)` returns an `OptionContractsResponse` object, NOT a list. It has `.option_contracts` (list of `OptionContract`) and `.next_page_token` attributes. Iterating the response directly yields tuples (index, item), NOT `OptionContract` objects. Always use `result.option_contracts`:
+  ```python
+  result = client.get_option_contracts(req)
+  contracts = result.option_contracts  # list of OptionContract
+  for c in contracts:
+      print(c.symbol, c.type, c.strike_price, c.expiration_date)
+  ```
+- **Option quotes need a different client**: `StockHistoricalDataClient` does NOT have `get_option_latest_quote`. Use `OptionHistoricalDataClient` from `alpaca.data.historical`:
+  ```python
+  from alpaca.data.historical import OptionHistoricalDataClient
+  from alpaca.data.requests import OptionLatestQuoteRequest
+  opt_data = OptionHistoricalDataClient(api_key, secret_key)
+  quotes = opt_data.get_option_latest_quote(OptionLatestQuoteRequest(symbol_or_symbols=["AAPL260508C00275000"]))
+  ```
+- **Free tier options data gaps**: The free paper tier returns quote data for CALL options but NOT puts (put quotes return empty). Open interest and volume are NOT available via the free tier. For full options analytics (OI, volume, IV, put quotes), use Barchart, Unusual Whales, or a paid data feed.
+- **Options contract pagination**: `GetOptionContractsRequest` has a `limit` parameter (default 100, max ~1000). Use `next_page_token` from the response to paginate:
+  ```python
+  req = GetOptionContractsRequest(underlying_symbols=["AAPL"], limit=500)
+  result = client.get_option_contracts(req)
+  contracts = result.option_contracts
+  if result.next_page_token:
+      req.page_token = result.next_page_token
+      next_result = client.get_option_contracts(req)
+      contracts += next_result.option_contracts
+  ```
 - **get_account() params**: The `TradingClient.get_account()` in alpaca-py takes no arguments (unlike some examples showing `GetAccountRequest` — removed in current version).
 - **Order lookup**: Use `GetOrdersRequest(limit=N, status='all')` not `client.get_orders(status='all')` — the method signature changed in current alpaca-py.
 
