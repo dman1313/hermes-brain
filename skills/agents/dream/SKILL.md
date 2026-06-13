@@ -228,13 +228,14 @@ credential pool: no available entries (all exhausted or empty)
 This means the primary credential is invalid and there's no fallback. Even if `jobs.json` says `provider: zai`, the credential pool may try other providers first. Fix: remove/rotate the expired credential, or ensure the pool has a working fallback.
 
 ### Audit Steps
-1. **Search** yesterday's sessions for:
-   - User corrections (`correction`, "don't do that", "remember this", "wrong")
-   - Failed tool calls or retries
-   - Repeated explanations of the same concept
-   - Admitted uncertainty ("I don't know how", "I'm not sure")
-   - Memory full errors: `grep -c 'exceed the limit\|Memory is full' session_YYYYMMDD_*.json | grep -v ':0$'` — this is the most common friction point and should be checked every run
-   - Unanswered user messages: sessions with exactly 1 user message and 0 assistant responses (find with: `python3 -c "import json,os; [print(f) for f in sorted(os.listdir('.')) if f.startswith('session_YYYYMMDD_') and f.endswith('.json') and len(json.load(open(f)).get('messages',[]))==1]"`)
+1. **Search** yesterday's sessions using `session_search` (the PRIMARY method — sessions are stored in an internal DB, NOT as individual JSON files):
+   - User corrections: `session_search(query="correction OR don't do that OR remember this OR wrong", limit=5, sort="newest")`
+   - Failed tool calls: `session_search(query="failed OR error OR retry OR didn't work", limit=5, sort="newest")`
+   - Repeated explanations: `session_search(query="same explanation OR repeated OR again", limit=5, sort="newest")`
+   - Admitted uncertainty: `session_search(query="I don't know OR I'm not sure OR uncertain", limit=5, sort="newest")`
+   - Memory full errors: `session_search(query="Memory is full OR exceed the limit", limit=5, sort="newest")`
+   - For each hit, use the session_id to scroll into the session with `session_search(session_id=..., around_message_id=..., window=5)` for context
+   - **DO NOT** use `ls session_YYYYMMDD_*.json` or `grep ... session_*.json` — those files don't exist (sessions.write_json_snapshots is false)
 2. **Pattern-check** — Was this a one-off or recurring?
 3. **Persist** — Write findings to `~/.hermes/obsidian_workspace/agent_shared/lessons_learned/dream_audit_YYYYMMDD_HHMMSS.md`
 4. **Propose** — If a pattern appears 2+ times, draft a skill spec in `~/.hermes/obsidian_workspace/agent_shared/workflow_templates/dream_proposal_YYYYMMDD.md`
@@ -268,158 +269,27 @@ Shared workspace: ~/.hermes/obsidian_workspace/agent_shared/ (lessons_learned/, 
 ```
 Observed: 4,377 → 3,871 bytes (May 23), 3,998 → 3,922 bytes (May 24). The sync script regenerates the block nightly, so this pruning must happen every run until the sync is disabled. This is the most effective way to break the vicious cycle.
 
-### Session Search Returns Mostly Cron Sessions
-`session_search` with broad queries (correction, error, skill) returns mostly DREAM's own cron sessions, drowning out actual user sessions. Strategy:
-1. Start with `session_search` for initial discovery
-2. Use `terminal` to list session files directly: `ls ~/.hermes/sessions/session_20260421_*.json` (non-cron) vs `session_cron_*.json` (cron)
-3. Parse user sessions with: `python3 -c "import json; d=json.load(open('SESSION_FILE')); msgs=[m for m in d['messages'] if m['role'] in ('user','assistant') and m.get('content')]; [print(m['role'][0], str(m['content'])[:300]) for m in msgs]"`
-4. Use `grep` to scan session files for specific patterns: `grep -l 'error.*exit_code' ~/.hermes/sessions/session_cron_*.json`
+### Session Search Strategy
+`session_search` with broad queries returns mostly DREAM's own cron sessions, drowning out actual user sessions. Strategy:
+1. Use `session_search` with targeted queries (correction, error, skill, failed) and `sort="newest"`
+2. Filter results by checking the session title/source — cron sessions have "cron" in their name
+3. For significant hits, scroll into the session with `session_search(session_id=..., around_message_id=..., window=5)`
+4. **DO NOT** use `ls ~/.hermes/sessions/session_*.json` or `grep` on session files — sessions are stored in an internal DB, not as individual JSON files (sessions.write_json_snapshots is false)
 
-### Evidence Triangulation Method (Proven Approach)
-A structured 5-step approach for reliably finding patterns across user sessions:
+### Evidence Triangulation Method (Updated for DB-backed sessions)
+A structured approach for reliably finding patterns across sessions:
 
-1. **List by date prefix** — `ls ~/.hermes/sessions/session_YYYYMMDD_*.json` gives you all user sessions for a day (non-cron). Note file sizes — large files (200KB+) are significant sessions.
+1. **Search by topic** — Use `session_search(query="...", limit=5, sort="newest")` to find sessions matching your audit focus. Targeted queries work better than broad ones.
 
-2. **Extract first messages** — Run a loop that prints each session's first user message to quickly identify topic clusters and spot duplicated sessions:
-```bash
-for f in session_YYYYMMDD_*.json; do
-  python3 -c "import json; d=json.load(open('$f')); msgs=[m for m in d.get('messages',[]) if m.get('role')=='user' and m.get('content')]; print(f'=== $f ==='); [print(f'  U: {str(m[\"content\"])[:200]}') for m in msgs[:5]]" 2>/dev/null
-done
-```
+2. **Scroll into hits** — For each significant result, use `session_search(session_id=..., around_message_id=..., window=5)` to read the conversation in context.
 
-3. **Count patterns across files** — Use `grep -c` piped through `grep -v ':0$'` to find which sessions contain a pattern. Run these standard scans every audit:
-```bash
-# Always run these 5 patterns — they cover the most common issues
-grep -c 'maximum number of tool-calling' session_YYYYMMDD_*.json | grep -v ':0$'
-grep -c 'previous turn was interrupted' session_YYYYMMDD_*.json | grep -v ':0$'
-grep -c 'exceed the limit\|Memory is full' session_YYYYMMDD_*.json | grep -v ':0$'
-grep -c 'error.*exit_code.*[^0]' session_YYYYMMDD_*.json | grep -v ':0$'
-grep -c 'You just executed tool calls but returned an empty response' session_YYYYMMDD_*.json | grep -v ':0$'
-```
-This gives you both the count AND which files match, in one pass. The memory-full pattern is particularly important — it's the #1 systemic friction point (observed in 15-45% of all sessions across 8+ consecutive nights).
+3. **Filter cron noise** — Cron sessions appear in results with "cron" in their source. Focus on user-initiated sessions (Telegram, CLI) for the audit.
 
-4. **Detect session duplication (two types)** — Correlate sessions by matching first user messages across different timestamps. Group sessions by their first user message (trimmed, lowered) to find duplication clusters:
-```python
-python3 << 'PYEOF'
-import json, os
-from collections import defaultdict
-groups = defaultdict(list)
-for f in sorted(os.listdir('.')):
-    if f.startswith('session_YYYYMMDD_') and not f.startswith('session_cron') and f.endswith('.json'):
-        d = json.load(open(f))
-        msgs = [m for m in d.get('messages',[]) if m.get('role')=='user' and m.get('content')]
-        if msgs:
-            first = str(msgs[0]['content'])[:80].strip().lower()
-            groups[first].append(f)
-for first, files in sorted(groups.items(), key=lambda x: -len(x[1])):
-    if len(files) >= 3:
-        print(f"CLUSTER ({len(files)} sessions): {first}")
-        for f in files: print(f"  {f}")
-PYEOF
-```
-There are two distinct duplication types to distinguish:
+4. **Check error logs** — `~/.hermes/logs/errors.log` remains a valid signal source. Use `grep 'YYYY-MM-DD' ~/.hermes/logs/errors.log` to find errors from the target date.
 
-**Type A: Model-switch duplicates** — Multiple sessions start with the same message but have different platform/model combos. The old session continues running while a new one starts. Check with:
-```python
-python3 -c "
-import json
-for fname in ['session1.json', 'session2.json']:
-    d = json.load(open(fname))
-    platform = d.get('platform','?')
-    model = d.get('model','?')
-    user_count = len([m for m in d.get('messages',[]) if m.get('role')=='user'])
-    print(f'{fname}: platform={platform} model={model} user_msgs={user_count}')
-"
-```
+5. **Deep-dive selectively** — Only scroll deep into sessions that show clear patterns (corrections, repeated errors, memory-full issues).
 
-**Type B: Restart retries** — Multiple sessions with the SAME platform/model but different timestamps, all starting with the same first message. **Two sub-types to distinguish:**
-
-- **B1: Productive continuations** — The user's task is long (building an app, multi-step research) and spans multiple context windows. Evidence: sessions have different last messages, task lists are preserved via compaction, and skills are saved at the end. These are NOT friction points — they're a natural consequence of long tasks. The agent handled them well.
-
-- **B2: Failed retries** — The user kept restarting because previous attempts failed or hit limits without producing useful output. Evidence: sessions all end at the same point (max iterations, errors), and no progress accumulates between attempts. Count the retries — if 3+ failed restarts for one task, flag it as a friction point. The root cause is usually a missing skill or a configuration obstacle.
-
-**How to tell them apart:** Check if the last user message in each session is different (productive continuation) vs. identical or a system error message (failed retry). Also check if the total message count grows across sessions (productive) vs. stays flat (failed).
-
-5. **Deep-dive selectively** — Only parse full session content for the sessions that matter (large files, sessions with corrections, sessions with errors). Use the Python one-liner with message index numbers to navigate long sessions efficiently.
-
-### Session File Format
-Session JSON files at `~/.hermes/sessions/` contain:
-- Top-level keys: `session_id`, `model`, `platform`, `system_prompt`, `messages`
-- `messages` is an array of `{role, content, ...}` objects
-- Non-cron sessions named `session_YYYYMMDD_HHMMSS_XXXXXX.json`
-- Cron sessions named `session_cron_JOBID_YYYYMMDD_HHMMSS.json`
-- JSONL files (`.jsonl`) also exist for some platforms
-
-### Pipe-to-Interpreter Security Scan
-Hermes terminal blocks commands that pipe file content into a Python interpreter (e.g., `cat file.json | python3 -c "..."` or `grep pattern file | python3 -c "..."`). The security scan tags these as `[HIGH] Pipe to interpreter` and requires user approval — which silently fails in cron mode. **Workaround:** Use `execute_code` (which can call `read_file` or `terminal` internally) or use `read_file` + inline Python instead of shell pipes. For example, instead of `cat jobs.json | python3 -c "..."`, use `execute_code` with `from hermes_tools import read_file` followed by JSON parsing in Python.
-
-### Write-Then-Verify Pattern
-Always verify file writes by reading the file back. The audit step 5 ("Verify the audit file was actually written") is critical — `write_file` can silently fail or write empty content. Use `read_file` on the first few lines to confirm.
-
-### execute_code Sandbox Import Isolation
-The `execute_code` sandbox does NOT share imports across statements. If you write `from hermes_tools import terminal` in one line and use `os.path.expanduser()` in the next, you get `NameError: name 'os' is not defined`. **Fix:** Always import standard libraries explicitly at the top of each `execute_code` block, even if you think they should be available:
-```python
-import json, os
-from hermes_tools import terminal
-# Now os.path.expanduser() works
-```
-This hit the DREAM cron on both May 12 and May 13 — same error, same fix. The sandbox resets imports between `execute_code` calls, so each block must be self-contained.
-
-### execute_code read_file Deduplication (Discovered May 29, STILL RECURRING May 30)
-
-> **⚠️ THIS IS THE #1 RECURRING BUG IN DREAM CRON CODE GENERATION.**
-> Hit 3 times May 29, 5 times May 30. The model generating DREAM's code keeps using `result['content']` even though the fix is documented here. If you are the model generating DREAM's `execute_code` blocks, **STOP USING `read_file` INSIDE `execute_code`**. Use `terminal("cat ...")` instead. No exceptions.
-
-When calling `read_file` from `execute_code`, the return dict has keys: `status`, `message`, `path`, `dedup`, `content_returned`. **The key is `content_returned`, NOT `content`.** More critically, `content_returned` is a **boolean** — it's `True` when content was returned, `False` when the file was deduplicated (already read earlier in the conversation). The actual file content is NOT in the return dict on dedup hits.
-
-**Why this happens:** `read_file` deduplicates by path — if you read the same file twice in one conversation, the second call returns `content_returned: False` with a message like "File unchanged since last read."
-
-**THE FIX (use this, not `read_file`):**
-```python
-# WRONG — will KeyError on 'content' after first read
-r = read_file('/path/to/file')
-data = json.loads(r['content'])  # KeyError!
-
-# RIGHT — terminal with heredoc, no dedup issue
-r = terminal("python3 << 'PYEOF'\nimport json\nwith open('/path/to/file.json') as f:\n    data = json.load(f)\nprint(json.dumps(data))\nPYEOF")
-```
-
-**Rule of thumb:** In `execute_code`, ALWAYS use `terminal` with heredoc for file reading. NEVER use `read_file` — the dedup behavior makes it unreliable in multi-step scripts. This is not a suggestion; it's a hard-won lesson from 8+ failures across 3 nights.
-
-### execute_code Script Truncation (Discovered May 2026)
-The DREAM cron's `execute_code` scripts get truncated mid-expression, causing recurring Python errors. Observed on May 16, 18, 20, and 22 — same pattern each time: the script cuts off in the middle of an f-string, method call, or expression.
-
-**Examples of truncated scripts:**
-- `if job.get('id', '')[:12] == 'bcca6a985` (May 16 — string literal cut off)
-- `last_user = str(user_msgs[-1].get('con` (May 20 — method call cut off)
-- `print(f'=== {f} ({sz//1024}KB) | {plat` (May 22 — f-string cut off)
-
-**Root cause:** The model generating the DREAM cron's code runs into token budget limits when writing complex execute_code blocks. The code looks complete to the model but gets truncated before reaching the sandbox.
-
-**Fix:** Keep execute_code scripts under 20 lines. If a script is complex, break it into multiple execute_code calls. Never write multi-line f-strings in execute_code — use simple `print()` with string concatenation instead. Prefer `terminal()` with heredoc for complex Python that needs many lines.
-
-**Impact:** Truncated scripts cause the DREAM cron to waste turns recovering from errors, and in some cases (May 21) the entire audit is lost because the cron never completes successfully.
-
-### execute_code f-string Curly Brace Conflict (Discovered May 29)
-When an f-string in `execute_code` contains content with literal curly braces (e.g., JSON output, error messages with braces), Python interprets them as format specifiers and raises `ValueError: Invalid format specifier`.
-
-**Observed May 29:** An f-string containing a GLMS error message with JSON (`{"error":{"code":"1310","message":"Weekly/Monthly Limit..."}}`) caused `ValueError: Invalid format specifier '"1310","message"...'`. The curly braces in the error message were treated as f-string format expressions.
-
-**Fix:** Never embed raw error messages or JSON inside f-strings. Use string concatenation (`+`) or `str.format()` instead. Or assign the problematic string to a variable first and reference it by name in the f-string. For audit content blocks, prefer triple-quoted regular strings (no `f` prefix) and use `.format()` or `%` formatting only where needed.
-
-**Rule of thumb:** If the `execute_code` script contains any string that might have curly braces (error logs, JSON snippets, API responses), do NOT use f-strings. Use plain string concatenation.
-
-### Python One-Liner Quoting in Shell Loops
-When embedding Python in shell `for` loops via `terminal`, `python3 -c "..."` with `$f` variable interpolation causes quoting conflicts (e.g., `str(m["content"])` fails with `NameError: name 'role' is not defined`). **Fix:** Use heredoc syntax instead:
-```bash
-cd ~/.hermes/sessions && python3 << 'PYEOF'
-import json, os
-for f in sorted(os.listdir('.')):
-    if f.startswith('session_YYYYMMDD_') and not f.startswith('session_cron'):
-        d = json.load(open(f))
-        msgs = [m for m in d.get('messages',[]) if m.get('role') in ('user','assistant') and m.get('content')]
-        print(f'{f}: {len(msgs)} msgs')
-PYEOF
+**NOTE:** Sessions are stored in an internal DB (sessions.write_json_snapshots is false). The old file-based approach (ls session_*.json, grep on files, Python JSON parsing) no longer works. Use session_search exclusively.
 ```
 The `'PYEOF'` (quoted) prevents shell variable expansion inside the heredoc, avoiding all quoting issues.
 

@@ -180,6 +180,26 @@ cd repo-name
 git remote add upstream https://github.com/owner/repo-name.git
 ```
 
+### Fork + Push-to-Fork (for local clones)
+
+When the user says "add it to our github" or "fork it", the standard pattern is:
+1. Fork without cloning (the repo may already be cloned locally)
+2. Configure the local clone to fetch from upstream, push to fork
+
+```bash
+# Fork without cloning
+gh repo fork owner/repo-name --clone=false
+
+# Configure existing local clone for push-to-fork
+cd /path/to/local/clone
+# Add your fork as a push URL (keeps upstream as fetch)
+git remote set-url --add origin git@github.com:$GH_USER/repo-name.git
+# Verify: fetch=upstream, push=your fork
+git remote -v
+```
+
+This setup means `git pull` fetches from upstream and `git push` goes to your fork — the standard open-source contribution workflow. Use SSH (`git@github.com:...`) for the push URL to avoid token prompts.
+
 ### Keeping a Fork in Sync
 
 ```bash

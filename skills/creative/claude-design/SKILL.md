@@ -580,6 +580,69 @@ When adapting a Claude Design style request into CLI/API mode, use this mental t
 You are running in CLI/API mode, not hosted Claude Design. Ignore references to hosted-only tools or preview panes. Produce complete local design artifacts, usually self-contained HTML with embedded CSS/JS, and verify with available local tools before returning. Preserve the design process: gather context, define the system, produce options, avoid filler, and meet a high visual bar.
 ```
 
+## Quick Sketches (Variant Exploration)
+
+When the user wants to **see a design direction before committing** — exploring a UI/UX idea as disposable HTML mockups — use the sketch workflow. The point is to generate 2-3 interactive variants so the user can compare visual directions side-by-side, not to produce shippable code.
+
+**Trigger:** "sketch this screen", "show me what X could look like", "compare layout A vs B", "give me 2-3 takes on this UI", "mockup this before I build".
+
+### Sketch Workflow
+
+```
+intake  →  variants  →  head-to-head  →  pick winner (or iterate)
+```
+
+**1. Intake** — Get three things (skip if user already gave enough):
+- **Feel.** "What should this feel like? Adjectives, emotions, a vibe."
+- **References.** "What apps, sites, or products capture the feel you're imagining?"
+- **Core action.** "What's the single most important thing a user does on this screen?"
+
+**2. Variants** — Produce 2-3 variants, each taking a **different design stance** (not different pixel values):
+- **Density:** compact / airy / ultra-dense
+- **Emphasis:** content-first / action-first / tool-first
+- **Aesthetic:** editorial / utilitarian / playful
+- **Layout:** single-column / sidebar / split-pane
+
+Two variants that differ only in accent color are wasted effort.
+
+**3. Build as real HTML** — Each variant is a single self-contained HTML file with inline CSS, realistic fake content, and at least one interactive state transition. Verify visually with browser tools.
+
+**4. Head-to-head** — Present as a comparison table. Opinionate: "My take: utilitarian dense for power users, calm editorial for content-forward audiences."
+
+### Variant Naming
+
+```
+sketches/
+├── 001-calm-editorial/
+│   ├── index.html
+│   └── README.md
+├── 001-utilitarian-dense/
+│   ├── index.html
+│   └── README.md
+└── 001-playful-split/
+    ├── index.html
+    └── README.md
+```
+
+### Interactivity Bar
+
+A sketch is interactive enough when the user can:
+1. Click a primary action and something visible happens
+2. See one meaningful state transition (filter a list, toggle a mode, open/close a panel)
+3. Hover recognizable affordances
+
+More than that is over-engineering a throwaway. Less than that is a screenshot.
+
+### Frontier Mode
+
+If sketches already exist and the user says "what should I sketch next?":
+- **Consistency gaps** — two winning variants from different sketches made independent choices
+- **Unsketched screens** — referenced but never explored
+- **State coverage** — happy path sketched, but not empty / loading / error
+- **Responsive gaps** — validated at one viewport; does it hold at mobile?
+
+---
+
 ## Pitfalls
 
 - Do not paste hosted tool schemas into a skill. They cause fake tool calls.

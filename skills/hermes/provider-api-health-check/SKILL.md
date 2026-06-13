@@ -11,6 +11,10 @@ triggers:
   - "check model availability"
   - "remove broken models"
   - "verify API keys"
+  - "test api key"
+  - "test alibaba key"
+  - "test dashscope"
+  - "test qwen"
 ---
 
 # Provider API Health Check
@@ -156,6 +160,7 @@ curl -s --max-time 15 "https://token-plan-ams.xiaomimimo.com/v1/chat/completions
 **The `hermes status` output does NOT list Xiaomi** in the API Keys section even when configured — Xiaomi appears only as the active provider line. Do not rely on `hermes status` to confirm Xiaomi key presence; check `.env` and `auth.json` directly.
 
 See `references/xiaomi-token-plan-recovery.md` for a session-specific recovery transcript.
+See `references/alibaba-dashscope-testing.md` for DashScope/Qwen endpoint details and testing approach.
 
 ### 5. OpenRouter 402 Does Not Mean Dead Provider
 OpenRouter returns HTTP 402 "This request requires more credits" when the remaining balance is insufficient for the requested `max_tokens`. The provider is alive — the request just needs a smaller `max_tokens` (try 10 for health checks). The system's remaining balance and monthly limit are available via `GET /api/v1/auth/key`. Do NOT mark OpenRouter as failed based on 402 alone.
@@ -188,8 +193,37 @@ Three categories for providers:
 - Provider: Reason (404/401/no key/rate limited)
 ```
 
-### 8. deepseek-chat and google/gemini-2.5-flash Silently Fail
+### 8. curl Shell Escaping Fails on API Key Testing
+
+When testing raw API keys with curl, bash frequently breaks with `unexpected EOF while looking for matching '"'` if the key or JSON body contains characters the shell interprets. This is especially common when the key is interpolated inline.
+
+**Fix:** Use Python urllib for raw key validation instead of curl:
+
+```python
+import urllib.request, json
+req = urllib.request.Request(
+    "https://endpoint/v1/chat/completions",
+    data=json.dumps({"model":"model","messages":[{"role":"user","content":"hi"}],"max_tokens":10}).encode(),
+    headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+)
+with urllib.request.urlopen(req, timeout=15) as resp:
+    print(resp.read().decode())
+```
+
+No escaping issues, no heredoc gymnastics, works with any key format.
+
+### 9. deepseek-chat and google/gemini-2.5-flash Silently Fail
 These models may produce zero assistant responses on simple prompts (tested: "Reply with exactly OK"). No error message, no HTTP failure — just empty output. If testing model availability, check for non-empty responses. Use deepseek-v4-pro or mimo-v2.5-pro as the reference model for health checks. (Observed: 3 consecutive failures on deepseek-chat, 1 on gemini-2.5-flash, Apr 30 2026.)
+
+### 10. DashScope Rate Limiting Silently Invalidates the Key
+
+DashScope (Alibaba) does not return 429 on rate limit — it returns 401 `invalid_api_key` on ALL models, including ones that just worked. This looks like a bad key but is actually a temporary lockout.
+
+**Trigger:** ~30 rapid requests (sequential with <1s delay) or any concurrent probing.
+**Duration:** 10+ minutes cooldown.
+**Fix:** Stop probing, wait 5 minutes, test with a single request. Use 3-5s delays between model probes, max 10 models per batch.
+
+See `references/alibaba-dashscope-testing.md` for the full analysis and safe probing strategy.
 
 ## Verification After Cleanup
 

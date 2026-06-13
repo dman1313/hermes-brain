@@ -25,8 +25,10 @@ Gmail, Calendar, Drive, Contacts, Sheets, Docs, and Slides — all through Pytho
 - `references/gmail-search-syntax.md` — Gmail search operators (is:unread, from:, newer_than:, etc.)
 - `references/hermes-drive-backup.md` — Hermes state backup workflow to Google Drive (script, cron, retention)
 - `references/google-slides-api.md` — Slides API patterns, pitfalls, helper functions, and the `fields` footgun
+- `references/docs-api-pitfalls.md` — Docs API formatting pitfalls: invalid fields (fontFamily, spaceBefore/spaceAfter, foregroundColor), working patterns, batch limits
 - `references/drive-folder-operations.md` — Create folders, move files, delete via standalone Drive API scripts (not in google_api.py)
 - `references/drive-management-operations.md` — Drive operations not in google_api.py: create folders, move files, bulk reorganize (standalone script pattern)
+- `references/google-docs-api.md` — Creating formatted Google Docs via API (two-pass text+format pattern, headings, bullets, colors, batch updates)
 
 ## Scripts
 
@@ -234,7 +236,7 @@ $GAPI sheets append SHEET_ID "Sheet1!A:C" --values '[["new","row","data"]]'
 $GAPI docs get DOC_ID
 ```
 
-**Creating new documents** is supported at the API level (scopes: `documents` + `drive.file`). The CLI wrapper doesn't yet expose a `docs create` command, but scripts can use the Google Docs API directly via the same token — see `wolf-newsletter.py` in `wolf-trading-agent` for a worked example of creating + formatting a Google Doc with batchUpdate.
+**Creating new documents** is supported at the API level (scopes: `documents` + `drive.file`). The CLI wrapper doesn't yet expose a `docs create` command, but scripts can use the Google Docs API directly via the same token. For creating formatted documents with headings, bold text, and bullet-like formatting, see `references/google-docs-api.md` for the two-pass pattern (build text → batch format). For a worked example, see `wolf-newsletter.py` in `wolf-trading-agent` (Google Doc creation + formatting with batchUpdate).
 
 ### Slides
 
@@ -287,6 +289,7 @@ All commands return JSON. Parse with `jq` or read directly. Key fields:
 | `HttpError 403: Access Not Configured` | API not enabled — user needs to enable it in Google Cloud Console |
 | `ModuleNotFoundError` | Run `$GSETUP --install-deps` |
 | Drive upload hangs / times out (60s+) | Large files (200MB+) may exceed the terminal tool's default timeout. The upload often succeeds on the Drive side even if the local command times out. After a timeout, verify with `$GAPI drive search \"filename\"` — if the file appears, the upload completed. For files >500MB, consider splitting or uploading from a non-Hermes context. |
+| Docs API formatting fails with Unknown name errors | Docs API field names differ from Slides API (e.g. fontFamily, spaceBefore, foregroundColor) | See `references/docs-api-pitfalls.md` for working patterns and field name mappings |
 | Drive upload times out for large files (200MB+) | The `execute_code` / `terminal` timeout default (60s) may be too short. The upload continues server-side and often succeeds despite the client timeout. Search Drive afterward to confirm: `$GAPI drive search "filename"`. To avoid the timeout, split into smaller archives or increase the tool timeout for the upload command. |
 | `No module named pip` during dependency install | Bootstrap pip in the Hermes venv with `$HERMES_HOME/hermes-agent/venv/bin/python -m ensurepip --default-pip`, then retry |
 | Advanced Protection blocks auth | Workspace admin must allowlist the OAuth client ID |

@@ -1282,6 +1282,43 @@ Optional body.
 
 Types: `fix:`, `feat:`, `refactor:`, `docs:`, `chore:`
 
+### Skill Authoring (In-Repo)
+
+Two places a SKILL.md can live:
+
+1. **User-local:** `~/.hermes/skills/<category>/<name>/SKILL.md` — created via `skill_manage(action='create')`
+2. **In-repo:** `skills/<category>/<name>/SKILL.md` — committed, shipped with the package. Use `write_file` + `git add`
+
+**In-repo frontmatter requirements** (from `tools/skill_manager_tool.py::_validate_frontmatter`):
+- Starts with `---` as first bytes (no leading blank line)
+- Closes with `\n---\n` before the body
+- `name` field present, ≤ 64 chars, lowercase + hyphens
+- `description` field present, ≤ 1024 chars, starts with "Use when ..."
+- Non-empty body after closing `---`
+- Total file ≤ 100,000 chars (aim for 8-15k)
+
+**Peer-matched shape:**
+```yaml
+---
+name: my-skill-name
+description: Use when <trigger>. <one-line behavior>.
+version: 1.0.0
+author: Hermes Agent
+license: MIT
+metadata:
+  hermes:
+    tags: [short, descriptive, tags]
+    related_skills: [other-skill]
+---
+```
+
+**Workflow:** Survey peers in target category → draft with `write_file` → validate locally → `git add` + commit. The current session's skill loader is cached — new skills won't appear until a fresh session.
+
+**Pitfalls:**
+- `skill_manage(action='create')` writes to `~/.hermes/skills/`, NOT the repo tree
+- Leading whitespace before `---` fails validation
+- `related_skills` from in-repo skills should reference only other in-repo skills (user-local links break for other clones)
+
 ### Key Rules
 
 - **Never break prompt caching** — don't change context, tools, or system prompt mid-conversation

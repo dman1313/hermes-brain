@@ -1,0 +1,38 @@
+{
+  "metadata": {
+    "scan_time": "2026-06-11T08:00:27",
+    "scanner": "full",
+    "reddit_posts": 10,
+    "twitter_tweets": 0,
+    "news_articles": 1,
+    "signals_found": 2
+  },
+  "signals": [
+    {
+      "ticker": "RDDT",
+      "mentions": 9,
+      "sources": [
+        "reddit"
+      ],
+      "total_sentiment": -0.9,
+      "score": 0.212,
+      "tier": "\u26aa NEUTRAL",
+      "avg_sentiment": -0.1,
+      "velocity": 1,
+      "company_name": "Reddit"
+    },
+    {
+      "ticker": "GME",
+      "mentions": 3,
+      "sources": [
+        "reddit"
+      ],
+      "total_sentiment": 0.1,
+      "score": 0.089,
+      "tier": "\u26aa NEUTRAL",
+      "avg_sentiment": 0.033,
+      "velocity": 1,
+      "company_name": "Gamestop"
+    }
+  ]
+}

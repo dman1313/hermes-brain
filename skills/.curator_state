@@ -1,9 +1,9 @@
 {
-  "last_report_path": "/home/ubuntu/.hermes/logs/curator/20260605-101321",
-  "last_run_at": "2026-06-05T10:13:21.367986+00:00",
-  "last_run_duration_seconds": 351.416357,
-  "last_run_summary": "auto: no changes; llm: Good — 10 skills archived in this pass (some consolidated, some pruned). Let me write the summary.\n\n---\n\n## Human Summary\n\n### Clusters Processed\n\n**1. Hermes Dashboard (2 skills → 1)**\n- `hermes-dashboard-customization` + `hermes-dashboard…\narchived 6 skill(s):\n  • hermes-dashboard-ops → hermes-dashboard-customization\n  • apple-notes — pruned (stale)\n  • apple-reminders — pruned (stale)\n  • findmy — pruned (stale)\n  • imessage — pruned (stale)\n  • macos-computer-use — pruned (stale)\nfull report: hermes curator status\nkeep an umbrella stable: hermes curator pin hermes-dashboard-customization",
+  "last_report_path": "/home/ubuntu/.hermes/logs/curator/20260612-102004",
+  "last_run_at": "2026-06-12T10:20:04.095887+00:00",
+  "last_run_duration_seconds": 521.406286,
+  "last_run_summary": "auto: no changes; llm: All 5 new umbrella skills created, 3 existing skills patched with absorbed content, 15 skills archived. Let me write the final summary.\n\n---\n\n## Consolidation Summary\n\n**8 consolidation actions executed, 15 skills archived, 5 new umbrella s…\narchived 15 skill(s):\n  • codebase-inspection → codebase-audit\n  • hermes-agent-skill-authoring → hermes-agent\n  • sketch → claude-design\n  • claude-code — pruned (stale)\n  • codex — pruned (stale)\n  • hermes-dashboard-customization — pruned (stale)\n  • hermes-office-setup — pruned (stale)\n  • kanban-orchestrator — pruned (stale)\n  • kanban-worker — pruned (stale)\n  • node-inspect-debugger — pruned (stale)\n  … and 5 more\nfull report: hermes curator status\nkeep an umbrella stable: hermes curator pin claude-design",
   "last_run_summary_shown_at": "2026-06-05T10:13:21.367986+00:00",
   "paused": false,
-  "run_count": 7
+  "run_count": 8
 }

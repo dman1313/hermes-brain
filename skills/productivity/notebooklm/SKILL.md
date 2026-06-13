@@ -19,7 +19,7 @@ The binary is `nlm` from the `notebooklm-mcp-cli` package. Installed at `/home/u
 
 - `sdd` → Spec-Driven Development notebook
 - `agent` → Agent notebook (40 sources)
-- `bio` → IGCSE Bio (45 sources)
+- `bio` → IGCSE Bio (96 sources, 84 past papers) — ID: `e621431b-2a33-4f44-b23b-4a86e2349cad`
 - H1 AI Brain: `e0da9697-4ba3-466f-9a59-1756dd3e5877`
 
 ## Command Mapping
@@ -105,6 +105,14 @@ The binary is `nlm` from the `notebooklm-mcp-cli` package. Installed at `/home/u
 - Used for session summary storage and cross-session context querying
 - Push session logs here at end of each session via wrapup skill
 
+## Related Skills
+
+- `sherlock-study-boy` — NotebookLM study package generation (video, slides, reports)
+
+## References
+
+- `references/exam-paper-analysis.md` — Workflow for cross-referencing exam papers against notebook sources to build concept frequency rankings.
+
 ## Autonomy Rules
 
 **Read-only (run without asking):**
@@ -130,6 +138,24 @@ The binary is `nlm` from the `notebooklm-mcp-cli` package. Installed at `/home/u
 | "Notebook not found" | Invalid ID | `nlm notebook list` to find correct ID |
 | "Rate limit exceeded" | Too many calls | Wait 30s, retry. Paid tier is more generous |
 | Video/slides fail 2x | Burst rate limit | Skip, retry later. Known NotebookLM paid tier quirk |
+
+## Pitfalls
+
+1. **Stale aliases**: Aliases can point to deleted notebooks (API returns NOT_FOUND). Always verify with `nlm notebook get <alias>` before trusting. If it fails, run `nlm notebook list` to find the correct notebook by title, then `nlm alias set <name> <new-id>` to fix it.
+
+2. **Query timeouts (~60s limit)**: Multi-part queries with "and"/"or" across different topics tend to timeout. Keep each query focused on ONE topic. For cross-referencing multiple concepts, run separate queries per concept and synthesize results yourself. Example: instead of "which papers test X and Y and Z", run three separate queries.
+
+3. **Scanned PDFs**: When adding scanned PDFs (no text layer), pymupdf `get_text()` returns empty. Use `get_pixmap(dpi=200)` to convert pages to images, then OCR/vision to extract text. Alternatively, NotebookLM handles scanned PDFs natively when added as sources — the OCR issue only matters for local extraction.
+
+4. **Large source lists**: Notebooks with 50+ sources produce long JSON from `nlm source list`. Pipe through grep/jq to filter rather than reading the full dump.
+
+## Content Extraction Patterns
+
+**For building documents from notebook content:**
+- Use `nlm notebook query <id> "detailed question"` for structured, synthesized answers. This is far cleaner than raw source content — NotebookLM extracts, organizes, and cites the relevant material.
+- Use `nlm source content <source-id>` only when you need the raw, unsynthesized text from a specific source (e.g., extracting exact quotes, checking OCR output, or verifying what a source actually says).
+- **Pipeline pattern**: Query multiple notebooks for complementary information, then combine the answers into a single document. Example: query notebook A for template structure, notebook B for domain content, then merge into a Google Doc via the Docs API (see `google-workspace` skill, `references/google-docs-api.md`).
+- When a notebook has both a domain-specific notebook (e.g., "Farm to Table Resources") and a framework notebook (e.g., "IB PYP"), query both — the domain notebook provides content, the framework notebook provides structure.
 
 ## Notes
 

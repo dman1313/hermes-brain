@@ -126,6 +126,25 @@ skill-seekers package output/<name> --target claude
 - `references/freellmapi.md` — FreeLLMAPI install: encryption key, port conflict (3001→3002), programmatic key injection via POST /api/keys, terminal-scanner workaround for API keys in curl, provider signup URLs, fallback chain ordering (2026-05-23).
 - `references/go-snap-install.md` — Installing Go via snap when apt repos are behind: channel pinning, GOPATH setup, version checks.
 
+- `references/headroom.md` — Context compression layer: install, 4 modes (library/proxy/wrap/MCP), API usage, compression results, Hermes integration potential (2026-06-14).
+
+---
+
+## Context Compression Tools
+
+### Headroom
+
+Context compression layer for AI agents. Compresses tool outputs, logs, RAG, files before they reach the LLM. 60-95% fewer tokens, local-first, reversible.
+
+```bash
+uv pip install headroom-ai                    # PEP 668 systems
+headroom wrap claude                          # wrap an agent
+headroom proxy --port 8787                    # zero-code proxy
+headroom mcp install                          # MCP server for Claude Code
+```
+
+Full install notes, API usage, and test results: `references/headroom.md`.
+
 ---
 
 ## Docker Compose Services
@@ -352,4 +371,45 @@ Dev servers are fine for exploration. For persistence, wrap in systemd once the 
    ```
    Also note the logic inversion: in v2.8 the matcher matched EMPTY cookie (negated by `== ''`); in v2.9 the CEL-standard form requires `!= ''` to match a non-empty cookie. Actually the old one had a bug — it was matching empty cookies and proxying to the dashboard, which was backwards. The new syntax forces you to write the correct conditional.
 
-10. **Caddy `:443` port zombie** — when Caddy fails to start (CEL syntax error, port conflict), the partial startup leaves a zombie `main` process holding port 443. `systemctl restart caddy` fails with `bind: address already in use`. Kill the zombie first: `sudo kill -9 $(sudo ss -tlnp | grep ':443 ' | grep -oP 'pid=\\K\\d+')`. Then restart normally.
+10. **Caddy `:443` port zombie** — when Caddy fails to start (CEL syntax error, port conflict), the partial startup leaves a zombie `main` process holding port 443. `systemctl restart caddy` fails with `bind: address already in use`. Kill the zombie first: `sudo kill -9 $(sudo ss -tlnp | grep ':443 ' | grep -oP 'pid=\\\\K\\\\d+')`. Then restart normally.
+11. **Rust/maturin-based Python packages** — packages using `maturin` as build backend (pyo3 Rust extensions) fail if the system Cargo is too old. Symptom: `feature 'edition2024' is required` during `uv pip install`. Fix sequence:
+    ```bash
+    # 1. Upgrade Rust toolchain (system apt often ships 1.75, need 1.85+)
+    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+    source "$HOME/.cargo/env"
+    rustc --version  # confirm 1.85+
+
+    # 2. Create venv
+    uv venv .venv && source .venv/bin/activate
+
+    # 3. Install maturin BEFORE the package (--no-build-isolation needs it in-venv)
+    uv pip install maturin
+
+    # 4. Install the package with --no-build-isolation
+    uv pip install -e ".[extras]" --no-build-isolation
+    ```
+    The `--no-build-isolation` flag tells pip/uv to use the venv's installed packages (including maturin) instead of creating an isolated build env. Without it, maturin isn't found even if installed globally.
+
+---
+
+## Evaluating "Clone and Install" Requests
+
+When a user says "clone and install [repo], will it help?" — they want TWO deliverables: (1) a working install, (2) an honest assessment of whether it's useful for their setup.
+
+### Workflow
+
+1. **Clone and install** — follow the repo's install method. Use venv + uv for Python projects.
+2. **Smoke test** — import the package, run a basic operation, verify it actually works.
+3. **Read the README and understand the value prop** — what does it claim to do?
+4. **Assess against the actual setup** — does it solve a real problem we have? Does it overlap with tools we already use? What's the overhead vs. benefit?
+5. **Give an honest verdict** — "installed at X, here's whether to wire it in." Don't oversell. If it's marginal, say so and explain why. If it's a clear win, explain the integration path.
+
+### Assessment Checklist
+
+- Does it solve a problem we're currently hitting, or a theoretical one?
+- Does it overlap with existing tools/skills/workflows?
+- What's the operational overhead (latency, complexity, maintenance)?
+- Where specifically would it help vs. where is it redundant?
+- Recommendation: wire in globally, use for specific cases, or keep installed but unused?
+
+See `references/headroom-evaluation.md` for a worked example.

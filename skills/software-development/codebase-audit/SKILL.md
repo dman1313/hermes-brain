@@ -66,6 +66,58 @@ Merge subagent reports into a single report:
 
 If any 🔴 Critical findings are trivially fixable (e.g., `chmod 600` on a token file), fix them during the audit. Report what was fixed vs what needs user decision.
 
+## Metrics & Inspection (pygount)
+
+Before or alongside a security/quality audit, you may need a quantitative overview of the codebase — LOC, language breakdown, code-vs-comment ratios.
+
+### Setup
+```bash
+pip install --break-system-packages pygount 2>/dev/null || pip install pygount
+```
+
+### Basic Summary
+```bash
+cd /path/to/repo
+pygount --format=summary \
+  --folders-to-skip=".git,node_modules,venv,.venv,__pycache__,.cache,dist,build,.next,.tox,.eggs,*.egg-info" \
+  .
+```
+
+**IMPORTANT:** Always use `--folders-to-skip` to exclude dependency/build directories, otherwise pygount will crawl them and take a very long time or hang.
+
+### Common Folder Exclusions
+```bash
+# Python projects
+--folders-to-skip=".git,venv,.venv,__pycache__,.cache,dist,build,.tox,.eggs,.mypy_cache"
+
+# JavaScript/TypeScript projects
+--folders-to-skip=".git,node_modules,dist,build,.next,.cache,.turbo,coverage"
+```
+
+### Filter by Language
+```bash
+pygount --suffix=py --format=summary .
+pygount --suffix=py,yaml,yml --format=summary .
+```
+
+### JSON Output
+```bash
+pygount --format=json .
+```
+
+### Interpreting Results
+
+Columns: **Language**, **Files**, **Code**, **Comment**, **%**
+
+Special pseudo-languages: `__empty__`, `__binary__`, `__generated__`, `__duplicate__`, `__unknown__`
+
+### Pitfalls
+- Always exclude `.git, node_modules, venv` — without `--folders-to-skip`, pygount will crawl everything.
+- Markdown shows 0 code lines — pygount classifies all Markdown content as comments. Expected behavior.
+- For very large repos, use `--suffix` to target specific languages.
+
+---
+
 ## Output Format
 
 ```markdown

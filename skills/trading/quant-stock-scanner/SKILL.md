@@ -31,6 +31,8 @@ python3 ~/.hermes/skills/trading/quant-stock-scanner/scripts/quant_scan.py AAPL 
 
 ## Workflow (Manual / In-Conversation)
 
+For **single-ticker analysis**, follow the steps below. For **multi-ticker scans** across the full options universe (60+ tickers, diverse spread setups), see `references/enhanced-multi-ticker-scan.md`.
+
 When a user asks for a "quant scan" on a ticker:
 
 1. **Pull OHLCV + fundamentals** via yfinance (6mo daily data). **If yfinance raises YFRateLimitError**, use Nasdaq API fallback for current price + fundamentals (P/E, EPS, Market Cap, 52W range) — see `references/nasdaq-api-fallback.md`. **Use Alpaca for real-time price** (`StockLatestTradeRequest` from `~/alpaca-bot/.env`) — yfinance prices are unreliable under rate limits.
@@ -160,6 +162,13 @@ Keep it data-dense. No fluff. Dwayne prefers bullet points over paragraphs.
 - IV on weeklies can be 200-300%+ — always note this is a volatility premium, not a directional signal.
 - Check bid-ask spread — if spread > 30% of midprice, the option is illiquid. Warn the user.
 - **Alpaca REST API: `details.expiration_date` is EMPTY** — must parse OCC symbol for expiry, type, and strike. See `references/options-spread-construction.md` for the correct parsing code.
+
+### Python Environment Split
+- **Hermes venv is Python 3.11** (`~/.hermes/hermes-agent/venv/bin/python3`). `alpaca-py` is installed in **Python 3.12** (`~/.local/lib/python3.12/site-packages/`). The venv python3 cannot `import alpaca`.
+- **For Alpaca API calls**: use `/usr/bin/python3` (which resolves to 3.12), NOT the hermes venv python3.
+- **For last30days sentiment**: requires `python3.12` explicitly — script checks version and exits on 3.11.
+- **Alpaca credentials**: load from `~/alpaca-bot/.env` via `dotenv` or manual parsing. Do NOT use `~/.hermes/.env` — it does not contain Alpaca keys.
+- **yfinance rate limits**: quant_scan.py hits `YFRateLimitError` after 2-3 consecutive calls. When scanning multiple tickers, either batch with delays or use Alpaca for prices and skip yfinance fundamentals for the extras.
 
 ### Scoring Model
 - The model is calibrated for US-listed equities. REITs, MLPs, and financial companies with unusual capital structures may score oddly on the quality factor.

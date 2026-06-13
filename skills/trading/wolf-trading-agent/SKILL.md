@@ -229,6 +229,20 @@ price = snap["MU"].latestTrade.p
 volume = snap["MU"].dailyBar.volume
 ```
 
+> **Python version note:** The default `python3` is 3.11, but `alpaca-py` is installed under Python 3.12 at `~/.local/bin/python3.12`. When running Alpaca SDK code inline, use `~/.local/bin/python3.12` instead of `python3`. Load credentials from `~/alpaca-bot/.env` via `dotenv`. Full working one-liner:
+> ```bash
+> ~/.local/bin/python3.12 -c "
+> import os; from dotenv import load_dotenv
+> load_dotenv(os.path.expanduser('~/alpaca-bot/.env'))
+> from alpaca.data import StockHistoricalDataClient
+> from alpaca.data.requests import StockLatestTradeRequest
+> client = StockHistoricalDataClient(os.getenv('ALPACA_API_KEY'), os.getenv('ALPACA_SECRET_KEY'))
+> snap = client.get_stock_latest_trade(StockLatestTradeRequest(symbol_or_symbols=['NFLX']))
+> print(snap['NFLX'].price)
+> "
+> ```
+> If `~/.local/bin/python3.12` is not found, try `python3.12` or check `which python3.12`.
+
 **Option B — Nasdaq API** (no auth, quick price + name lookup):
 ```python
 import urllib.request, json
