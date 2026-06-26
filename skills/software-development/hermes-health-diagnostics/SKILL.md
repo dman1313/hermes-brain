@@ -298,6 +298,57 @@ TELEGRAM_ALLOWED_USERS=7824646153,1234567890
 GATEWAY_ALLOW_ALL_USERS=true
 ```
 
+### MCP Server Process Leak (Zombie MCPs)
+**Symptom:** High memory/CPU from multiple `npm exec firecrawl-mcp`, `npm exec @upstash/context7-mcp`, or similar MCP processes. 20+ processes piling up, consuming 1-2GB RAM collectively.
+
+**Root cause:** MCP server config has broken connection parameters (e.g. `args` stored as a JSON string `'["-y", "firecrawl-mcp"]'` instead of a YAML list `[-y, firecrawl-mcp]`, or the binary isn't installed). The gateway spawns a new connection attempt on each retry cycle, and since the config is broken, every attempt spawns a new orphan process that never cleans up.
+
+**Diagnosis:**
+```bash
+# Count and inspect MCP processes
+ps aux | grep -E "firecrawl-mcp|context7-mcp|scrapling.*mcp" | grep -v grep
+# Count them
+ps aux | grep -E "firecrawl-mcp|context7-mcp|scrapling.*mcp" | grep -v grep | wc -l
+```
+
+**Immediate fix — kill zombies:**
+```bash
+pkill -f "firecrawl-mcp" 2>/dev/null
+pkill -f "context7-mcp" 2>/dev/null
+# Or force kill all at once:
+kill -9 $(ps aux | grep -E "firecrawl-mcp|context7-mcp|scrapling.*mcp" | grep -v grep | awk '{print $2}') 2>/dev/null
+```
+
+**Permanent fix — disable broken MCP servers in config.yaml:**
+```yaml
+# In ~/.hermes/config.yaml, set enabled: false for any MCP server that
+# can't connect (missing binary, wrong args format, no API key):
+mcp_servers:
+  scrapling:
+    enabled: false
+  firecrawl:
+    enabled: false
+```
+
+**Prevention — validate args format in config.yaml:**
+YAML expects `args` to be a list, not a quoted JSON string:
+```yaml
+# ✅ CORRECT — YAML list:
+args:
+  - -y
+  - firecrawl-mcp
+
+# ❌ WRONG — JSON string (causes infinite spawn loop):
+args: '["-y", "firecrawl-mcp"]'
+```
+
+**Recovered memory check:**
+```bash
+free -h   # After cleanup, typically recovers 1-2GB
+```
+
+**Important:** Disabling `firecrawl` MCP server doesn't break the `web` backend — the gateway handles it through the configured `web.backend` path, not through MCP.
+
 ### Gateway Process Dead
 **Symptom:** No gateway process in `ps aux`
 **Fix:**
