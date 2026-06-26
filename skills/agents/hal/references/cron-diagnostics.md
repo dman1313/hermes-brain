@@ -79,3 +79,41 @@ Wait 15-30 seconds, then check `last_status` via `cronjob(action="list")`. Note:
 | `telegram:<id>:<thread>` | Delivers to specific chat + thread |
 | `local` | Output stored in output files only, no external delivery |
 | `origin` | Delivers to the channel where the last user interaction occurred |
+
+## Provider=None Cascade (Silent Multi-Job Failure)
+
+**Signature:** Multiple cron jobs fail with the same error — `Provider 'X' is set in config.yaml but no API key was found` — but the jobs themselves don't specify a provider.
+
+**Root cause:** When a cron job has `provider: None` (or the field is absent), it inherits the global default provider from `~/.hermes/config.yaml`. If that provider's API key is missing, expired, or revoked, EVERY provider=None job fails silently. The jobs don't name the provider in their own config, so the failures look unrelated when they share a single root cause.
+
+**Detection — list all provider=None jobs:**
+```bash
+python3 -c "
+import json
+jobs = json.load(open('/home/ubuntu/.hermes/cron/jobs.json')).get('jobs', [])
+for j in jobs:
+    if not j.get('provider'):
+        print(f\"{j['id'][:12]} | {j.get('name','?')} | schedule={j.get('schedule','?')} | enabled={j.get('enabled',True)}\")
+"
+```
+
+**Detection — check if current default provider has a key:**
+```bash
+python3 -c "
+import yaml, os
+cfg = yaml.safe_load(open(os.path.expanduser('~/.hermes/config.yaml')))
+default = cfg.get('model', {}).get('provider', cfg.get('provider', '?'))
+print(f'Default provider: {default}')
+# Check if key env var is set — adjust pattern per provider
+print(f'Key env var set: {bool(os.getenv(default.upper() + \"_API_KEY\"))}')
+"
+```
+
+**Known case (Jun 2026):** minimax was set as the default provider in config.yaml but MINIMAX_API_KEY was not set. 9 cron jobs failed silently: IGCSE Biology Pipeline (hourly → 24 fails/day, misdiagnosed for weeks as concept-progress.json bug), Second Brain Sync (every 3h), GDrive backup, brain backup, agent-memory-daily, CFTC COT scanner, June 30 Countdown, Sean bed pickup reminder, DRAM Exit reminder. The IGCSE pipeline alone accumulated 523+ failures. The board task T-0003 targeted concept-progress.json — the wrong diagnosis — because nobody checked whether the job could even start.
+
+**Fix options:**
+1. Set the missing API key: `export PROVIDER_API_KEY=...` in `~/.hermes/.env`
+2. Rotate provider=None jobs to an explicit provider with a working key via `hermes cron edit <id> --provider deepseek`
+3. Change the global default provider to one with a working key in config.yaml
+
+**Prevention:** Add a provider-key health check to the daily brief. After listing provider=None jobs, verify the default provider's key exists. Flag immediately if any provider=None job exists AND the default provider key is missing.

@@ -176,7 +176,25 @@ terminal(command="claude -p 'What did you do last time?' --continue --max-turns 
 5. **Context degradation is real** — AI output quality measurably degrades above 70% context window usage. Monitor with `/compact`.
 6. **ANTHROPIC_API_KEY alone does NOT authenticate `claude` CLI for print mode** — Claude Code v2.x checks OAuth first. Use `claude auth login --console` once to bind the key.
 7. **Print mode with `pty=true` can hit the 600s Hermes timeout** — check `git diff --stat` afterward; changes are often written to disk even if Hermes reports a timeout.
-8. **Non-Anthropic backends consistently time out with bare `ANTHROPIC_BASE_URL`** — For GLM/Z.AI, use `@lee_ai/coding-helper` npm package. For other backends: fall back to building directly or use Goose CLI.
+- **Non-Anthropic backends consistently time out with bare `ANTHROPIC_BASE_URL`** — For GLM/Z.AI, use `@lee_ai/coding-helper` npm package. For other backends: fall back to building directly or use Goose CLI.
+- **Claude Code `--model` only accepts Anthropic model aliases** — `sonnet`, `opus`, `haiku`, or full names like `claude-sonnet-4-6`. You CANNOT pass `--model glm-5.1` or `--model glm-5.2` — Claude Code will reject non-Anthropic model names. The Z.AI proxy translates Anthropic API calls to GLM on the backend, but model selection stays within the Anthropic family. To use GLM models directly, call them through Hermes (`hermes -z --provider zai -m glm-5.2`) instead of Claude Code.
+- **Claude Code validates models via `/v1/models` endpoint** — Before making API calls, Claude Code queries `{BASE_URL}/v1/models?limit=1000` to verify the model exists. For Z.AI, the correct base URL is `https://api.z.ai/api` (NOT `/api/coding/paas/v4`) — this makes Claude Code hit `/api/v1/models` which returns the model list. If your inference key only works on the OpenAI-compatible endpoint (`/api/coding/paas/v4/chat/completions`), use the Anthropic→OpenAI proxy at `scripts/zai-anthropic-proxy.js`. See `references/zai-endpoint-discovery.md` for the full Z.AI endpoint map, key types, and model slugs.
+- **Auth success ≠ model permissions (401 vs 403)** — An API key that authenticates (no 401) may still return 403 "No permission to access model" for every model. This happens when the key was issued for MCP/web tools only, not LLM inference. The z.ai dashboard issues different key types — MCP keys (for glms-search, glms-reader, etc.) and inference keys (for LLM calls). A single key may work for one but not the other. Test with: `python3 -c "import urllib.request, json; ... POST to /api/v1/messages ..."` to verify inference access before configuring Claude Code.
+- **`~/.claude/settings.json` env vars for model routing** — Claude Code reads env vars from `settings.json`'s `env` object. Useful overrides: `ANTHROPIC_DEFAULT_SONNET_MODEL`, `ANTHROPIC_DEFAULT_HAIKU_MODEL`, `ANTHROPIC_DEFAULT_OPUS_MODEL` (set to proxy-specific model names), `ANTHROPIC_BASE_URL` (set to proxy endpoint), `CLAUDE_CODE_AUTO_COMPACT_WINDOW` (context window size). Format: `{ "env": { "KEY": "value" }, "model": "sonnet" }`. Note: model validation still applies — the env vars only change what name is sent, not whether the proxy accepts it.
+- **Project files may live on Dwayne's Mac, not the VPS** — Before launching Claude Code on the VPS for a project task, verify the project directory and skill files exist locally. The PYP planner skill is at `~/.claude/skills/pyp-planner/SKILL.md` on the Mac. If files are Mac-only, either (a) sync them to the VPS first, (b) run Claude Code on the Mac via SSH, or (c) use Hermes directly with whatever context is available.
+- **Z.AI correct base URL is `https://api.z.ai/api`** — NOT `/api/coding/paas/v4` or bare `https://api.z.ai`. Claude Code appends `/v1/models` to the base URL; only `https://api.z.ai/api/v1/models` returns 200. Model slugs exposed: `gpt-4o` (→ glm-5.1), `gpt-4o-mini` (→ glm-4.5-air), `o3-mini` (→ glm-5.1). Raw GLM names won't pass validation. See `references/zai-endpoint-discovery.md` for full endpoint map.
+- **Simple path-rewriting proxies may not work with Claude Code's Bun binary** — A Node.js reverse proxy that only rewrites paths (e.g. `/v1/models` → `/models`) works with curl but Claude Code's compiled Bun binary may not hit it. The Anthropic→OpenAI translation proxy (`scripts/zai-anthropic-proxy.js`) DOES work — the difference is it translates the full API format (Anthropic Messages → OpenAI Chat Completions), not just paths.
+
+### Proxy Provider Setup (Non-Anthropic Backends)
+
+Full Z.AI endpoint discovery, key types, model slugs, and working configs: `references/zai-endpoint-discovery.md`.
+Anthropic→OpenAI translation proxy (for keys that only work on OpenAI endpoint): `scripts/zai-anthropic-proxy.js`.
+General proxy debugging flow: `references/claude-code-proxy-provider-setup.md`.
+
+**Quick summary for Z.AI:**
+1. Base URL: `https://api.z.ai/api` (model validation lands on `/api/v1/models`)
+2. Model slugs: `gpt-4o` (→ glm-5.1), `gpt-4o-mini` (→ glm-4.5-air)
+3. If key returns 403 on `/api/v1/messages` but works on `/api/coding/paas/v4/chat/completions`, run the proxy: `ANTHROPIC_API_KEY=<key> node scripts/zai-anthropic-proxy.js` and set `ANTHROPIC_BASE_URL=http://127.0.0.1:18765`
 
 ### Pre-Flight Check (MANDATORY before every invocation)
 

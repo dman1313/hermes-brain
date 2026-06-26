@@ -1,0 +1,15 @@
+{
+  "metadata": {
+    "scan_time": "2026-06-17T08:05:09.832180",
+    "scanner": "full",
+    "reddit_posts": 0,
+    "reddit_time": 2.0,
+    "twitter_tweets": 0,
+    "twitter_time": 1.2,
+    "news_articles": 0,
+    "news_time": 23.1,
+    "signals_found": 0,
+    "notes": "GNews API daily quota exhausted (100 req/day free tier). Reddit DDG broken (known since May 2026). Twitter/xurl returning JSON errors for all accounts."
+  },
+  "signals": []
+}

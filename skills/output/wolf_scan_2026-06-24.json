@@ -1,0 +1,45 @@
+{
+  "metadata": {
+    "scan_time": "2026-06-24T15:48:39.466285",
+    "scanner": "full",
+    "reddit_posts": 25,
+    "reddit_time": 38.8,
+    "twitter_tweets": 0,
+    "twitter_time": 2.8,
+    "news_articles": 0,
+    "news_time": 23.1,
+    "signals_found": 1
+  },
+  "signals": [
+    {
+      "ticker": "COST",
+      "mentions": 6,
+      "sources": [
+        "reddit"
+      ],
+      "total_sentiment": 0.0,
+      "sentiment_count": 6,
+      "reddit_score": 0,
+      "reddit_mentions": 6,
+      "twitter_mentions": 0,
+      "news_mentions": 0,
+      "top_posts": [
+        {
+          "text": "bought $40k in COST calls because of something i noticed at my local costco and i need you to hear me out before you say",
+          "source": "reddit",
+          "subreddit": "wallstreetbets",
+          "score": 0,
+          "url": "https://www.reddit.com/r/wallstreetbets/comments/1udy49x/bought_40k_in_cost_calls_because_of_something_i/"
+        }
+      ],
+      "reddit_urls": [
+        "https://www.reddit.com/r/wallstreetbets/comments/1udy49x/bought_40k_in_cost_calls_because_of_something_i/"
+      ],
+      "score": 0.149,
+      "tier": "\u26aa NEUTRAL",
+      "avg_sentiment": 0.0,
+      "velocity": 1,
+      "company_name": "Costco"
+    }
+  ]
+}

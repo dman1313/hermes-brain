@@ -214,6 +214,10 @@ xurl auth oauth1 \
 xurl auth app --bearer-token YOUR_BEARER_TOKEN
 ```
 
+### xurl `user` subcommand lacks `-n`/`--max-results` flag
+
+The `xurl user <username>` subcommand does NOT accept `-n` to limit results (unlike `xurl search`, which does). Calling `xurl user handle -n 5` returns a usage error, not tweet data. **Fix:** drop the `-n` flag and truncate at the application level (`tweets[:max_results]`).
+
 ### Agent Workflow
 
 1. Verify prerequisites: `xurl --help` and `xurl auth status`
@@ -232,3 +236,4 @@ xurl auth app --bearer-token YOUR_BEARER_TOKEN
 | `CreditsDepleted` | $0 balance on X API | Buy credits (min $5) in Developer Console → Billing |
 | 401 on every request | Token expired or wrong default app | Check `xurl auth status` |
 | `UsernameNotFound` after OAuth | X not returning username reliably | Re-run `xurl auth oauth2 --app my-app YOUR_USERNAME` |
+| `xurl user` returns usage error | `-n` flag used on `user` subcommand (not supported) | Drop `-n`. Truncate results at app level: `tweets[:max_results]` |

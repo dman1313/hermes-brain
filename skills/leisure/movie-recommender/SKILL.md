@@ -66,8 +66,12 @@ When the subscription-dependent tools are down, use the browser tool for researc
 - `rottentomatoes.com/search` — score + cast + streaming info in search cards
 - `en.wikipedia.org/wiki/2026_in_film` — box office + notable releases
 - `en.wikipedia.org/wiki/List_of_American_films_of_2026` — chronological release tables
+- `micropsiacine.com` — WordPress-based, ~64KB pages, full review text in clean HTML (strip tags with sed for instant readable content)
+- `blog.cineswipe.app` — ~131KB pages, structured content with genre tags, cast lists, and "Hype" scores; often has richer detail than major outlets
+- `decider.com` — page body is JS-rendered, but JSON-LD structured data in `<head>` contains full film lists with titles, cast, genres, and platform tags — extractable even when the article text is hidden
 
 Full list of tested URLs and extraction techniques: see `references/browser-research-sources.md`.
+Terminal-accessible sources and fallback extraction techniques: see `references/terminal-research-sources.md`.
 
 ### Fallback: Terminal-Based Research (last resort — DDG Lite blocks VPS IPs)
 
@@ -90,6 +94,8 @@ grep 'result-link\|result-snippet' /tmp/ddg.html | head -40
 ```
 
 **Extract article text from saved HTML:**
+
+*Primary method (Python HTMLParser):*
 ```bash
 # Save page first (avoid pipe-to-python — security scanner blocks it)
 curl -s -A "Mozilla/5.0" "URL" -o /tmp/page.html
@@ -116,6 +122,16 @@ for l in e.t:
 "
 ```
 
+*Fallback (when Python parser gets nothing — modern HTML often defeats it):*
+```bash
+# Brute-force tag stripping — works on virtually any HTML
+cat /tmp/page.html | sed 's/<[^>]*>//g' | sed '/^[[:space:]]*$/d' | while IFS= read -r line; do
+  clean=$(echo "$line" | tr -s ' ' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+  if [ ${#clean} -gt 40 ]; then echo "$clean"; echo; fi
+done | head -80
+```
+This simpler approach was the one that actually extracted content from real-world sites in testing. Use it first on smaller sites (<200KB); resort to the Python parser only when you need targeted keyword filtering.
+
 **Wikipedia film lists:** Use `curl -A "Mozilla/5.0"` with the API. Space requests 2+ seconds apart to avoid rate-limiting (all sections return 228-byte error pages when throttled). The `List of American films of 2026` page has release tables; `2026 in film` has box office rankings.
 
 **Streaming verification:** Search `"[film title]" streaming Amazon Prime Video Apple TV rent buy May` via DDG Lite. PVOD availability often appears in snippets.
@@ -123,11 +139,16 @@ for l in e.t:
 ## Pitfalls
 
 - **VPS IP blocking on search engines:** DDG Lite and DDG HTML search now captcha-block from datacenter/VPS IPs after 1-3 queries. Google search blocks outright. Metacritic has Cloudflare bot detection. **Do not depend on terminal-based search engines as your primary research path.** Use the browser tool instead — it's the most reliable way to reach editorial sites, Rotten Tomatoes search, and curation pages from this environment.
+- **DDG Lite rate-limiting pattern:** First 3-4 queries typically return results (always POST with `-d`). After that, queries return 0 results or empty snippets. If `grep -c 'result-link' /tmp/ddg.html` returns 0 on a query that should have results, you've hit the limit. Wait several minutes before retrying, or switch to direct site access.
 - **web_extract timeout:** Large pages (Rotten Tomatoes, Variety, IndieWire) routinely trigger auxiliary model timeouts. Don't depend on them. Lean on search snippets for scores and quotes — they're faster and more reliable.
+- **AI-generated content sites (SLOP DETECTION):** Sites like `nishadil.com` publish articles with fabricated film titles and generic descriptions. Look for telltale signs: "Editorial note: may use AI assistance," film titles that don't appear in any other source, generic prose with no specific plot details. If a site lists 6 "films" and all 6 descriptions sound like ChatGPT wrote them from a template, discard immediately. Verify any film title you plan to recommend appears in at least two independent sources.
 - **Theater-only films:** If a film is only in theaters, skip it. "Where to watch" must be a streaming platform Dwayne can access now. If you can't confirm streaming availability, move to the next candidate.
 - **Stale data:** Scores change. Prefer snippets from search results (dated) over cached knowledge. Verify the streaming platform is current.
 - **Rotten Tomatoes browse pages are alphabetical:** The "Movies to Stream at Home" and "Movies on Netflix" pages sort films alphabetically even when you select "Tomatometer (Highest)" — old films from 2010-2020 appear first. Use RT **search** (`rottentomatoes.com/search?search=...`) instead, or navigate directly to known curation articles.
-- **Wikipedia API rate-limiting:** Rapid sequential API calls return 228-byte error pages. Space calls apart or batch sections into a single `for` loop with brief pauses.
+- **Wikipedia API rate-limiting:** Rapid sequential API calls return 228-byte error pages. Space calls apart (at least 2 seconds) or batch sections into a single loop with brief pauses.
+- **Very new films missing from Wikipedia:** Films released in the current month (and often the last 2-3 months) frequently have no Wikipedia page. The API may return a different film with the same title. Don't treat "no Wikipedia page" as "film doesn't exist" — verify via review sites instead.
+- **JS-rendered pages:** Major news sites (Boston.com, Yahoo, BuzzFeed) now load article content exclusively via JavaScript. `curl` returns only `<script>` tags and New Relic boilerplate. If a page is >100KB but text extraction yields only JS, the content is client-side rendered — move on rather than fighting it. Small WordPress-based sites (MicropsiaCine, Cineswipe) and API endpoints (Wikipedia) remain server-rendered and accessible.
+- **Cloudflare/429 on WordPress.com sites:** Sites hosted on WordPress.com (e.g., `beebulletin.com`) return 429 errors from VPS IPs. Avoid these.
 
 ## Selection Criteria
 

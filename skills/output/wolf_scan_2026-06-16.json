@@ -1,0 +1,106 @@
+{
+  "metadata": {
+    "scan_time": "2026-06-16T08:00:48.690611",
+    "scanner": "full",
+    "reddit_posts": 10,
+    "reddit_time": 2.6,
+    "twitter_tweets": 0,
+    "twitter_time": 1.3,
+    "news_articles": 0,
+    "news_time": 33.8,
+    "signals_found": 2
+  },
+  "signals": [
+    {
+      "ticker": "RDDT",
+      "mentions": 10,
+      "sources": [
+        "reddit"
+      ],
+      "total_sentiment": -0.9999999999999999,
+      "sentiment_count": 10,
+      "reddit_score": 0,
+      "reddit_mentions": 10,
+      "twitter_mentions": 0,
+      "news_mentions": 0,
+      "top_posts": [
+        {
+          "text": "r/wallstreetbets - Reddit",
+          "source": "reddit",
+          "subreddit": "wallstreetbets",
+          "score": 0,
+          "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2F&amp;rut=719ea39ec4bf155075dc78dbd27910c1c8bcaf40a2e1944f2b6dc61f8bbe2067"
+        },
+        {
+          "text": "Time to quit\u2026 goodbye wallstreet bets : r/wallstreetbets - Reddit",
+          "source": "reddit",
+          "subreddit": "wallstreetbets",
+          "score": 0,
+          "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2F1cznx2k%2Ftime_to_quit_goodbye_wallstreet_bets%2F&amp;rut=8a9230b631280eb057fca7f939d25ec1063c974ca32b463149b7f8c7cbd6909d"
+        },
+        {
+          "text": "It&#x27;s Finally Over\u2026 : r/wallstreetbets - Reddit",
+          "source": "reddit",
+          "subreddit": "wallstreetbets",
+          "score": 0,
+          "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2F1am35gz%2Fits_finally_over%2F&amp;rut=76646e4258a14a438789a2b4a4a79948df37fe6b36c37da01d7939c9eec30d48"
+        }
+      ],
+      "reddit_urls": [
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2F&amp;rut=719ea39ec4bf155075dc78dbd27910c1c8bcaf40a2e1944f2b6dc61f8bbe2067",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2F1cznx2k%2Ftime_to_quit_goodbye_wallstreet_bets%2F&amp;rut=8a9230b631280eb057fca7f939d25ec1063c974ca32b463149b7f8c7cbd6909d",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2F1am35gz%2Fits_finally_over%2F&amp;rut=76646e4258a14a438789a2b4a4a79948df37fe6b36c37da01d7939c9eec30d48",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2Fnwzl7d%2Fwsb_discussion_today%2F&amp;rut=5d169da130fce7fee686e68c1a58b852e2b4fa472da24eedaa3cfb4a931ae3a3",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2Fmt0ac4%2Fwelcome_to_wallstreetbets%2F&amp;rut=d33c7f5343fde8f4ecf47dbed3cdf1a11eff39bc5d132c66a165503fec73244b",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2F19b0k67%2F8_million2500_gain_in_2_months_20_million5000%2F&amp;rut=dc511175893eb70e24f162e34a8aac89615a04ba503be9115382b05e0559ade6",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2F14b963y%2Fmy_lifes_over_heres_my_final_advice%2F&amp;rut=5464a672a5e71ec583256dae9282c605f2864f1169b1220156ac8d224875b892",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2F16vo3s7%2Fmy_loss_today_and_advice_for_others%2F&amp;rut=58132299818372d3afebdae7dbd7e2ce3792844be068d65cc153ca85c7b55a24",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2F167610g%2Fmost_anticipated_earning_gamestop%2F&amp;rut=f6b3f7d52e70a26ff9b6dee6235fe1eaad579092ead2106d237117fae68f7dd7",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2Fl6j4r9%2Fwhere_do_we_go_from_here_and_who_is_going_to_step%2F&amp;rut=8ce2c4bd5fbb4b88bc9e63b4d311e654db7c573cb30773e4de57b51eff7c7fea"
+      ],
+      "score": 0.233,
+      "tier": "\u26aa NEUTRAL",
+      "avg_sentiment": -0.1,
+      "velocity": 1,
+      "company_name": "Reddit"
+    },
+    {
+      "ticker": "GME",
+      "mentions": 3,
+      "sources": [
+        "reddit"
+      ],
+      "total_sentiment": 0.1,
+      "sentiment_count": 3,
+      "reddit_score": 0,
+      "reddit_mentions": 3,
+      "twitter_mentions": 0,
+      "news_mentions": 0,
+      "top_posts": [
+        {
+          "text": "Welcome to Wallstreetbets : r/wallstreetbets - Reddit",
+          "source": "reddit",
+          "subreddit": "wallstreetbets",
+          "score": 0,
+          "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2Fmt0ac4%2Fwelcome_to_wallstreetbets%2F&amp;rut=d33c7f5343fde8f4ecf47dbed3cdf1a11eff39bc5d132c66a165503fec73244b"
+        },
+        {
+          "text": "Most Anticipated Earning: GameStop : r/wallstreetbets - Reddit",
+          "source": "reddit",
+          "subreddit": "wallstreetbets",
+          "score": 0,
+          "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2F167610g%2Fmost_anticipated_earning_gamestop%2F&amp;rut=f6b3f7d52e70a26ff9b6dee6235fe1eaad579092ead2106d237117fae68f7dd7"
+        }
+      ],
+      "reddit_urls": [
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2Fmt0ac4%2Fwelcome_to_wallstreetbets%2F&amp;rut=d33c7f5343fde8f4ecf47dbed3cdf1a11eff39bc5d132c66a165503fec73244b",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2F167610g%2Fmost_anticipated_earning_gamestop%2F&amp;rut=f6b3f7d52e70a26ff9b6dee6235fe1eaad579092ead2106d237117fae68f7dd7"
+      ],
+      "score": 0.089,
+      "tier": "\u26aa NEUTRAL",
+      "avg_sentiment": 0.033,
+      "velocity": 1,
+      "company_name": "Gamestop"
+    }
+  ]
+}

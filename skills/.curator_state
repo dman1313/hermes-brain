@@ -1,9 +1,9 @@
 {
-  "last_report_path": "/home/ubuntu/.hermes/logs/curator/20260612-102004",
-  "last_run_at": "2026-06-12T10:20:04.095887+00:00",
-  "last_run_duration_seconds": 521.406286,
-  "last_run_summary": "auto: no changes; llm: All 5 new umbrella skills created, 3 existing skills patched with absorbed content, 15 skills archived. Let me write the final summary.\n\n---\n\n## Consolidation Summary\n\n**8 consolidation actions executed, 15 skills archived, 5 new umbrella s…\narchived 15 skill(s):\n  • codebase-inspection → codebase-audit\n  • hermes-agent-skill-authoring → hermes-agent\n  • sketch → claude-design\n  • claude-code — pruned (stale)\n  • codex — pruned (stale)\n  • hermes-dashboard-customization — pruned (stale)\n  • hermes-office-setup — pruned (stale)\n  • kanban-orchestrator — pruned (stale)\n  • kanban-worker — pruned (stale)\n  • node-inspect-debugger — pruned (stale)\n  … and 5 more\nfull report: hermes curator status\nkeep an umbrella stable: hermes curator pin claude-design",
-  "last_run_summary_shown_at": "2026-06-05T10:13:21.367986+00:00",
+  "last_report_path": "/home/ubuntu/.hermes/logs/curator/20260619-110106",
+  "last_run_at": "2026-06-19T11:01:06.941972+00:00",
+  "last_run_duration_seconds": 1.363916,
+  "last_run_summary": "auto: no changes; llm: skipped (consolidation off)",
+  "last_run_summary_shown_at": "2026-06-19T11:01:06.941972+00:00",
   "paused": false,
-  "run_count": 8
+  "run_count": 9
 }

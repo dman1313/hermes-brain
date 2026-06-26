@@ -69,7 +69,7 @@ All 4 require `Authorization: Bearer <api_key>` header. Vision also needs `Z_AI_
 - GLM-5-Turbo — Opus-level, faster
 - GLM-4.7 — Sonnet-level, daily development
 
-Switch in Claude Code: `/model` in interactive session, or `--model` flag.
+**⚠️ Model selection caveat:** Claude Code's `--model` flag only accepts Anthropic aliases (`sonnet`, `opus`, `haiku`) or full Anthropic model names. You cannot pass `--model glm-5.1`. The Z.AI proxy handles GLM routing on the backend — Claude Code thinks it's talking to Anthropic. To explicitly select a GLM model, use Hermes directly: `hermes -z --provider zai -m glm-5.2`.
 
 ## Also Configuring for Hermes Agent
 
@@ -99,9 +99,14 @@ mcp_servers:
 
 GLM as a provider in Hermes needs `GLM_API_KEY` in `~/.hermes/.env` and `GLM_BASE_URL=https://api.z.ai/api/coding/paas/v4`.
 
+## Also Configuring Claude Code Directly (No chelper)
+
+See `references/zai-endpoint-discovery.md` for the full endpoint discovery report. Key finding: **the correct `ANTHROPIC_BASE_URL` for Claude Code is `https://api.z.ai/api`** (NOT `/api/coding/paas/v4`). Model slugs are `gpt-4o` (→ glm-5.1), `gpt-4o-mini` (→ glm-4.5-air), `o3-mini` (→ glm-5.1). You need an **inference key** (not MCP key) for LLM calls.
+
 ## Pitfalls
 
-- **Bare ANTHROPIC_BASE_URL times out** — Don't set it directly. Use `chelper auth reload claude-code` instead. The coding helper handles whatever protocol translation is needed.
+- **Wrong ANTHROPIC_BASE_URL causes 404 on model validation** — Claude Code validates models via `{BASE_URL}/v1/models?limit=1000`. The correct base URL is `https://api.z.ai/api` (which makes the full path `/api/v1/models`, returning 200). Wrong URLs like `https://api.z.ai` or `https://api.z.ai/api/coding/paas/v4` produce 404 → "There's an issue with the selected model". Use the Anthropic→OpenAI translation proxy (`scripts/zai-anthropic-proxy.js`) when your key only works on the OpenAI-compatible endpoint.
+- **Auth ≠ model permissions** — A z.ai API key that authenticates (no 401) may still return 403 "No permission to access model" for every GLM model. This happens when the key was issued for MCP/web tools only, not LLM inference. Get a separate inference key from the z.ai dashboard, or use the coding helper which handles key routing.
 - **`.env` is write-protected** — Hermes blocks direct writes to credential files. Use `sed -i` via terminal.
 - **Vision MCP needs Node.js >= v22** — Check with `node --version` first.
 - **MCP tools need session restart** — In Hermes, `/reset` after adding MCP servers. Claude Code auto-discovers on startup.

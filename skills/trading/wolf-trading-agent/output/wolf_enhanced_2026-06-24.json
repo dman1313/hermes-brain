@@ -1,0 +1,31 @@
+{
+  "metadata": {
+    "scan_time": "2026-06-24T08:00:59.706715",
+    "scanner": "full",
+    "reddit_posts": 10,
+    "reddit_time": 2.6,
+    "twitter_tweets": 0,
+    "twitter_time": 1.2,
+    "news_articles": 0,
+    "news_time": 26.5,
+    "signals_found": 1
+  },
+  "signals": [
+    {
+      "ticker": "RDDT",
+      "mentions": 10,
+      "sources": ["reddit"],
+      "total_sentiment": -1.0,
+      "sentiment_count": 10,
+      "reddit_score": 0,
+      "reddit_mentions": 10,
+      "twitter_mentions": 0,
+      "news_mentions": 0,
+      "score": 0.233,
+      "tier": "⚪ NEUTRAL",
+      "avg_sentiment": -0.1,
+      "velocity": 1,
+      "company_name": "Reddit"
+    }
+  ]
+}

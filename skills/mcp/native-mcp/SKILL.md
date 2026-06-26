@@ -78,6 +78,7 @@ You can then use the tools naturally -- just ask the agent to get the current ti
 
 ## Pitfalls
 
+- **Not every CLI tool is an MCP server** — before adding a tool to `mcp_servers`, verify it actually supports MCP. Run `<tool> --help` and look for an `mcp` subcommand or `--mcp` flag. Tools like `zeabur`, `gh`, `ruff`, `ast-grep` are pure CLIs — they belong on PATH only, not in Hermes MCP config. Adding a non-MCP tool as an MCP server causes silent startup failures. If unsure, try `<tool> mcp` — if it says "unknown command", it's not an MCP server.
 - **Protected config file**: `~/.hermes/config.yaml` cannot be edited with `patch` or `write_file`. Use `hermes config set` for simple values, or **Python yaml** for complex multi-key entries:
   ```python
   python3 -c "

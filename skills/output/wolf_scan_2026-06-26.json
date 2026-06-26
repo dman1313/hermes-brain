@@ -1,0 +1,215 @@
+{
+  "metadata": {
+    "scan_time": "2026-06-26T08:02:54.814224",
+    "scanner": "full",
+    "reddit_posts": 0,
+    "reddit_time": 14.6,
+    "twitter_tweets": 0,
+    "twitter_time": 2.6,
+    "news_articles": 62,
+    "news_time": 24.5,
+    "signals_found": 10
+  },
+  "signals": [
+    {
+      "ticker": "U",
+      "mentions": 19,
+      "sources": [
+        "news"
+      ],
+      "total_sentiment": -1.0,
+      "sentiment_count": 19,
+      "reddit_score": 0,
+      "reddit_mentions": 0,
+      "twitter_mentions": 0,
+      "news_mentions": 19,
+      "top_posts": [],
+      "reddit_urls": [],
+      "score": 0.2,
+      "tier": "\u26aa NEUTRAL",
+      "avg_sentiment": -0.053,
+      "velocity": 1,
+      "company_name": "Unity"
+    },
+    {
+      "ticker": "BB",
+      "mentions": 12,
+      "sources": [
+        "news"
+      ],
+      "total_sentiment": 2.4000000000000004,
+      "sentiment_count": 12,
+      "reddit_score": 0,
+      "reddit_mentions": 0,
+      "twitter_mentions": 0,
+      "news_mentions": 12,
+      "top_posts": [],
+      "reddit_urls": [],
+      "score": 0.146,
+      "tier": "\u26aa NEUTRAL",
+      "avg_sentiment": 0.2,
+      "velocity": 1,
+      "company_name": "Blackberry"
+    },
+    {
+      "ticker": "INTC",
+      "mentions": 11,
+      "sources": [
+        "news"
+      ],
+      "total_sentiment": 3.500000000000001,
+      "sentiment_count": 11,
+      "reddit_score": 0,
+      "reddit_mentions": 0,
+      "twitter_mentions": 0,
+      "news_mentions": 11,
+      "top_posts": [],
+      "reddit_urls": [],
+      "score": 0.143,
+      "tier": "\u26aa NEUTRAL",
+      "avg_sentiment": 0.318,
+      "velocity": 1,
+      "company_name": "Intel"
+    },
+    {
+      "ticker": "JPM",
+      "mentions": 11,
+      "sources": [
+        "news"
+      ],
+      "total_sentiment": -1.1,
+      "sentiment_count": 11,
+      "reddit_score": 0,
+      "reddit_mentions": 0,
+      "twitter_mentions": 0,
+      "news_mentions": 11,
+      "top_posts": [],
+      "reddit_urls": [],
+      "score": 0.124,
+      "tier": "\u26aa NEUTRAL",
+      "avg_sentiment": -0.1,
+      "velocity": 1,
+      "company_name": "Jpmorgan"
+    },
+    {
+      "ticker": "AMC",
+      "mentions": 10,
+      "sources": [
+        "news"
+      ],
+      "total_sentiment": -4.0,
+      "sentiment_count": 10,
+      "reddit_score": 0,
+      "reddit_mentions": 0,
+      "twitter_mentions": 0,
+      "news_mentions": 10,
+      "top_posts": [],
+      "reddit_urls": [],
+      "score": 0.115,
+      "tier": "\u26aa NEUTRAL",
+      "avg_sentiment": -0.4,
+      "velocity": 1,
+      "company_name": "Amc"
+    },
+    {
+      "ticker": "COIN",
+      "mentions": 6,
+      "sources": [
+        "news"
+      ],
+      "total_sentiment": 0.6000000000000001,
+      "sentiment_count": 6,
+      "reddit_score": 0,
+      "reddit_mentions": 0,
+      "twitter_mentions": 0,
+      "news_mentions": 6,
+      "top_posts": [],
+      "reddit_urls": [],
+      "score": 0.083,
+      "tier": "\u26aa NEUTRAL",
+      "avg_sentiment": 0.1,
+      "velocity": 1,
+      "company_name": "Coinbase"
+    },
+    {
+      "ticker": "AAPL",
+      "mentions": 5,
+      "sources": [
+        "news"
+      ],
+      "total_sentiment": 1.2000000000000002,
+      "sentiment_count": 5,
+      "reddit_score": 0,
+      "reddit_mentions": 0,
+      "twitter_mentions": 0,
+      "news_mentions": 5,
+      "top_posts": [],
+      "reddit_urls": [],
+      "score": 0.082,
+      "tier": "\u26aa NEUTRAL",
+      "avg_sentiment": 0.24,
+      "velocity": 1,
+      "company_name": "Apple"
+    },
+    {
+      "ticker": "ASTS",
+      "mentions": 4,
+      "sources": [
+        "news"
+      ],
+      "total_sentiment": 0.4,
+      "sentiment_count": 4,
+      "reddit_score": 0,
+      "reddit_mentions": 0,
+      "twitter_mentions": 0,
+      "news_mentions": 4,
+      "top_posts": [],
+      "reddit_urls": [],
+      "score": 0.064,
+      "tier": "\u26aa NEUTRAL",
+      "avg_sentiment": 0.1,
+      "velocity": 1,
+      "company_name": "Ast Spacemobile"
+    },
+    {
+      "ticker": "SBUX",
+      "mentions": 4,
+      "sources": [
+        "news"
+      ],
+      "total_sentiment": -0.4,
+      "sentiment_count": 4,
+      "reddit_score": 0,
+      "reddit_mentions": 0,
+      "twitter_mentions": 0,
+      "news_mentions": 4,
+      "top_posts": [],
+      "reddit_urls": [],
+      "score": 0.058,
+      "tier": "\u26aa NEUTRAL",
+      "avg_sentiment": -0.1,
+      "velocity": 1,
+      "company_name": "Starbucks"
+    },
+    {
+      "ticker": "GM",
+      "mentions": 3,
+      "sources": [
+        "news"
+      ],
+      "total_sentiment": -0.30000000000000004,
+      "sentiment_count": 3,
+      "reddit_score": 0,
+      "reddit_mentions": 0,
+      "twitter_mentions": 0,
+      "news_mentions": 3,
+      "top_posts": [],
+      "reddit_urls": [],
+      "score": 0.048,
+      "tier": "\u26aa NEUTRAL",
+      "avg_sentiment": -0.1,
+      "velocity": 1,
+      "company_name": "General Motors"
+    }
+  ]
+}

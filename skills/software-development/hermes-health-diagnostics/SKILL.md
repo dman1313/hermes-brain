@@ -215,6 +215,53 @@ If any step surfaces errors, warnings, or stale timestamps, investigate the corr
 
 ## Common Issues & Solutions
 
+### API Server (api_server) Platform Fails to Start ("API_SERVER_KEY is required")
+
+**Symptom:** Logs show repeated `[Api_Server] Refusing to start: API_SERVER_KEY is required for the API server` errors every ~5 minutes, but `API_SERVER_KEY` is correctly set in `~/.hermes/.env`.
+
+**CRITICAL FIRST STEP — check if the api_server is ACTUALLY down right now:**
+```bash
+curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8642/health
+```
+If this returns `200`, the api_server is **running** and the errors are from a previous process — skip to issue resolution below.
+
+**Root cause:** This is a **process-lifecycle mismatch**, not an env var misconfiguration. The error logs are from a **previous** gateway process that had a stale environment or import-order issue. When the gateway restarts (via systemd auto-restart or manual `hermes gateway restart`), the new process loads `.env` correctly and the api_server starts fine.
+
+**Diagnosis — distinguish current vs historical:**
+```bash
+# 1. Check when the running gateway started (compare with log error timestamps)
+ps -o pid,lstart,cmd --pid "$(pgrep -f 'gateway run' | head -1)"
+
+# 2. Check when the LAST error occurred in logs
+grep "API_SERVER_KEY is required" ~/.hermes/logs/gateway.log | tail -3
+
+# 3. If the current process started AFTER the last error, the issue is already resolved
+# Verify: the api_server should be running now
+curl -s http://127.0.0.1:8642/health
+
+# 4. Check for gateway restarts around the error window
+journalctl --user -u hermes-gateway --since "10 minutes ago" --no-pager | grep -iE "started|stopped"
+```
+
+**Why it happens:**
+- In rare cases, the import chain in `gateway/run.py` can have a race where `gateway/config.py`'s `os.getenv("API_SERVER_KEY", "")` reads an empty value before `load_hermes_dotenv()` has populated `os.environ`.
+- This is a transient startup condition that self-resolves on the next gateway restart.
+- Once `.env` is loaded, the config properly reads the key and the `APIServerAdapter` constructor receives it via `config.platforms[Platform.API_SERVER].extra["key"]`.
+
+**Fix:**
+```bash
+# The current solution: just restart the gateway
+hermes gateway restart
+# Wait ~60s for restart backoff
+sleep 60
+# Verify
+curl -s http://127.0.0.1:8642/health
+```
+
+**Why NOT to chase a config fix:** The `.env` file is correctly formatted and contains the key. Systemd service definition doesn't need to `EnvironmentFile` the `.env` because Hermes loads it at import time via `load_hermes_dotenv()`. This is not a config problem — it's a transient process lifecycle issue that a restart resolves.
+
+**Health check reporting guidance:** When the health monitor shows this error, always verify the CURRENT gateway process start time against the error timestamp. Report "historical" vs "active" so the operator doesn't chase ghosts.
+
 ### Discord Command Sync Failure
 **Symptom:** "Command exceeds maximum size (8000)" in logs OR "HTTP status 400, error code 50035"
 **Cause:** Discord API limits total command descriptions to 8000 characters. Commonly affects the 'skill' command group which aggregates many skill-related commands.

@@ -19,20 +19,20 @@ from datetime import datetime
 
 # Financial news search queries — high-signal, trade-relevant
 NEWS_QUERIES = [
-    "stock market today top movers",
-    "earnings report after hours today",
-    "analyst upgrade downgrade today",
-    "FDA approval stock news",
-    "merger acquisition deal today",
-    "stock breakout record high",
-    "stock crash downgrade warning",
-    "crypto stocks news today",
-    "semiconductor stocks news",
-    "AI stocks news today",
-    "defense stocks contract award",
-    "oil energy stocks news",
-    "EV electric vehicle stocks news",
-    "IPO direct listing today",
+    "stock market movers",
+    "earnings report",
+    "analyst upgrade",
+    "FDA approval",
+    "merger acquisition",
+    "stock breakout",
+    "stock crash",
+    "crypto stocks",
+    "semiconductor stocks",
+    "AI stocks",
+    "defense stocks",
+    "oil energy stocks",
+    "EV stocks",
+    "IPO today",
 ]
 
 GNews_API = "https://gnews.io/api/v4/search"
@@ -65,7 +65,7 @@ def search_gnews(query: str, api_key: str, max_results: int = 5,
     """
     params = {
         "q": query,
-        "token": api_key,
+        "apikey": api_key,
         "lang": lang,
         "country": country,
         "max": max_results,

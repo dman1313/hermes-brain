@@ -1,11 +1,63 @@
 ---
 name: shared-memory-vault
-description: "Shared agent wiki vault workflow — read, update, and sync the fleet-wide knowledge base at ~/agent-memory/. Use when starting sessions, recording decisions, logging activity, or coordinating with other agents."
+description: "Shared agent wiki vault workflow — read, update, and sync the fleet-wide knowledge base. Use when starting sessions, recording decisions, logging activity, or coordinating with other agents. Two systems: agent-brain (~/agent-brain/, dman1313/agent-brain) is the NEW canonical brain; agent-memory (~/agent-memory/, dman1313/agent-memory-coding) is the LEGACY vault still in use for wiki content."
 tags: [wiki, fleet, collaboration, obsidian, git]
 related_skills: [obsidian, wiki-git-sync, git-workflow-and-versioning]
 ---
 
 # Shared Wiki Vault
+
+**Two systems coexist.** Know which one you're using.
+
+| System | Path | Repo | Status |
+|--------|------|------|--------|
+| **Agent Brain** (new) | `~/agent-brain/` | dman1313/agent-brain | **Canonical.** Session ritual, per-agent activity logs, inbox, projects. |
+| **Agent Memory** (legacy) | `~/agent-memory/` | dman1313/agent-memory-coding | Wiki content, STANDING-ORDERS, schema. Still used for wiki/ and raw/. |
+
+**Default:** Use agent-brain for session ritual, activity logging, agent profiles. Use agent-memory only when touching wiki/ or raw/ content.
+
+**BRAIN_ROOT** env var points to the active brain (set in `~/.bashrc`). Verify: `test -f "$BRAIN_ROOT/AGENTS.md" && echo OK`.
+
+---
+
+## Agent Brain — Session Ritual (NEW — use this)
+
+```bash
+cd ~/agent-brain && git pull --rebase --autostash
+```
+
+**Quick Q&A / one-off** → answer directly. No reads, no logging.
+
+**Project / multi-step / code work:**
+1. `git pull`
+2. Read `NOW.md` — current fleet state (auto-generated)
+3. Read `agents/{your-name}.md` — your profile + last state
+4. Resuming a project? Read `projects/{slug}.md` FIRST
+5. Log session-start to `activity/{your-name}.md` (NOT ACTIVITY.md)
+
+**During:** log events to `activity/{your-name}.md` as they happen.
+
+**Session end:**
+1. Update `projects/{slug}.md` (Status now / Next steps / Open)
+2. Update `agents/{your-name}.md`
+3. Log session-end to `activity/{your-name}.md`
+4. `git add -A && git commit && git push`
+
+**Activity log format** (in `activity/{your-name}.md`):
+```
+YYYY-MM-DDTHH:MM:SSZ | event | project-slug | detail
+```
+Events: session-start · session-end · decision · blocker · blocker-resolve · milestone · handoff · note
+
+**Generated files (never hand-edit):** ACTIVITY.md, NOW.md, wiki/index.md, agents/_roster.md — rebuilt by `scripts/janitor.sh`.
+
+**Filing rule:** projects → `projects/{slug}.md` | fleet/user prefs → `memory/` | real-world entities → `raw/` (curator promotes to wiki/) | messages → `inbox/{recipient}/`
+
+See `references/agent-brain.md` for full repo structure and migration notes.
+
+---
+
+## Agent Memory (Legacy) — use only for wiki/raw content
 
 The agent-memory vault (`~/agent-memory/`) is the fleet-wide **shared wiki** — not just a memory store. All agents (Hermes, Claude Code, Codex, Goose, Kimi, Kiro, MacH, antigravity, cursor) read and write here via Git.
 
@@ -14,9 +66,7 @@ The agent-memory vault (`~/agent-memory/`) is the fleet-wide **shared wiki** —
 **Mac path:** `/Users/dwayne-primeau/Library/Mobile Documents/com~apple~CloudDocs/Agent Memory/Coding`
 **Canonical instructions:** The vault's own CLAUDE.md, STANDING-ORDERS.md, AGENT-SETUP.md are the source of truth. See `references/vault-instructions.md` for reading order and context.
 
-## Conditional Startup Protocol
-
-**Quick Q&A or one-off questions** — answer directly. Skip vault reads and ACTIVITY logging.
+### Legacy Conditional Startup Protocol
 
 **Project work, multi-step tasks, or code changes** — do the full startup below. When in doubt, do the full startup — it's cheaper than missing context.
 
@@ -120,15 +170,19 @@ Include: platform, model routing, skills, services, current capabilities, extern
 
 ## Pitfalls
 
+- **Two brains, wrong target:** Agent-brain (`~/agent-brain/`) is the NEW canonical brain for session ritual. Agent-memory (`~/agent-memory/`) is legacy, used only for wiki/raw content. Don't do session ritual against the old vault.
 - **Not using the vault at all (most common failure):** The vault exists. The skill exists. The cron exists. But if you don't actually pull, read, log, and push during your sessions, none of it works. This is the #1 failure mode — Hermes went weeks without logging session-starts because it treated the vault as optional. It is not optional. SOUL.md section 22b enforces this. Every real session (not quick Q&A) must follow the startup protocol. If you catch yourself doing work without having pulled the vault first, stop and do the startup protocol retroactively.
-- **ACTIVITY.md marker missing:** `build-context.sh` looks for `<!-- ENTRIES BELOW THIS LINE -->` — without it, NOW.md generates with 0 entries. Always include this marker.
+- **Activity log target:** In agent-brain, each agent logs to its OWN file (`activity/{name}.md`), NOT to the shared ACTIVITY.md (which is auto-generated). In agent-memory (legacy), all agents log to the single shared ACTIVITY.md.
+- **ACTIVITY.md marker missing (legacy):** `build-context.sh` looks for `<!-- ENTRIES BELOW THIS LINE -->` — without it, NOW.md generates with 0 entries. Always include this marker.
 - **Push before pull:** Always `git pull --rebase --autostash` before editing to avoid merge conflicts with Mac agents.
 - **Don't edit CONTEXT.md or NOW.md directly:** They're auto-generated. Edit the source files and regenerate.
-- **Ghost sessions:** If you did real work, there MUST be a trail in ACTIVITY.md. Other agents rely on this to avoid duplicate work.
-- **build-context.sh threshold:** Only run after 5+ new ACTIVITY.md entries. Otherwise the overhead isn't worth it.
+- **Ghost sessions:** If you did real work, there MUST be a trail in activity/{name}.md (agent-brain) or ACTIVITY.md (legacy). Other agents rely on this to avoid duplicate work.
+- **build-context.sh threshold (legacy):** Only run after 5+ new ACTIVITY.md entries. Otherwise the overhead isn't worth it.
 - **Deleting another agent's entries:** Never do this without Dwayne's approval.
 - **Memory file naming:** Use kebab-case slugs with YAML frontmatter. Body uses `[[wikilinks]]` for Obsidian graph navigation.
-- **MEMORY.md drift:** Hermes MEMORY.md can develop drift if edited by multiple tools (memory tool, patch tool, shell append, concurrent sessions). If the memory tool refuses to write with a "drift" error, read the .bak file, integrate missing entries, and rewrite the file clean. Don't ignore the error — the guard exists to prevent silent data loss.
+- **MEMORY.md drift:** Hermes MEMORY.md can develop drift if edited by multiple tools (memory tool, patch tool, shell append, concurrent sessions). If the memory tool refuses to write with a "drift" error, the .bak file at `~/.hermes/memories/MEMORY.md.bak.<timestamp>` contains the correct content. Fix: read the .bak file, rewrite MEMORY.md cleanly via terminal with the .bak content (integrating any new entries), then retry the memory tool. This happened 2026-06-14 — the file was rewritten clean via terminal and the drift was resolved. Do NOT use sed/direct shell edits on MEMORY.md as a workaround — the memory tool's drift guard exists to prevent data loss.
+- **BRAIN_ROOT not set:** If `$BRAIN_ROOT` is empty or points to a missing directory, verify: `test -f "$BRAIN_ROOT/AGENTS.md" && echo OK`. Should be in `~/.bashrc`.
+- **`patch` tool on append-only logs:** The `patch` (find-replace) tool can cause duplicate entries when replacing a marker line in an append-only log file — it replaces the marker AND keeps the old entries below, then the new entries get prepended above the duplicates. For activity logs, use `write_file` to rewrite the whole file cleanly if duplicates appear, rather than trying to patch again.
 
 ## Cross-Agent Skill Sharing
 

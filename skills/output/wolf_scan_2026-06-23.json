@@ -1,0 +1,68 @@
+{
+  "metadata": {
+    "scan_time": "2026-06-23T08:00:35.501397",
+    "scanner": "full",
+    "reddit_posts": 10,
+    "reddit_time": 2.6,
+    "twitter_tweets": 0,
+    "twitter_time": 1.2,
+    "news_articles": 0,
+    "news_time": 30.7,
+    "signals_found": 1
+  },
+  "signals": [
+    {
+      "ticker": "RDDT",
+      "mentions": 10,
+      "sources": [
+        "reddit"
+      ],
+      "total_sentiment": -0.9999999999999999,
+      "sentiment_count": 10,
+      "reddit_score": 0,
+      "reddit_mentions": 10,
+      "twitter_mentions": 0,
+      "news_mentions": 0,
+      "top_posts": [
+        {
+          "text": "r/wallstreetbets - Reddit",
+          "source": "reddit",
+          "subreddit": "wallstreetbets",
+          "score": 0,
+          "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2F&amp;rut=014834dacf25ce337eb79fde7de2566a54c321d4ce9351e147b861e3e53fb50f"
+        },
+        {
+          "text": "It&#x27;s Finally Over\u2026 : r/wallstreetbets - Reddit",
+          "source": "reddit",
+          "subreddit": "wallstreetbets",
+          "score": 0,
+          "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2F1am35gz%2Fits_finally_over%2F&amp;rut=b8bf8cfb04e9f4e34faa49e79ae004198b05d7dc195bd3b823a746602678b5a6"
+        },
+        {
+          "text": "Time to quit\u2026 goodbye wallstreet bets : r/wallstreetbets - Reddit",
+          "source": "reddit",
+          "subreddit": "wallstreetbets",
+          "score": 0,
+          "url": "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2F1cznx2k%2Ftime_to_quit_goodbye_wallstreet_bets%2F&amp;rut=c8aad0ed450d62bf4e120a6d22eaf0468d9b58363149fd05cd7aff71cd604b83"
+        }
+      ],
+      "reddit_urls": [
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2F&amp;rut=014834dacf25ce337eb79fde7de2566a54c321d4ce9351e147b861e3e53fb50f",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2F1am35gz%2Fits_finally_over%2F&amp;rut=b8bf8cfb04e9f4e34faa49e79ae004198b05d7dc195bd3b823a746602678b5a6",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2F1cznx2k%2Ftime_to_quit_goodbye_wallstreet_bets%2F&amp;rut=c8aad0ed450d62bf4e120a6d22eaf0468d9b58363149fd05cd7aff71cd604b83",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2Fmt0ac4%2Fwelcome_to_wallstreetbets%2F&amp;rut=2d2052350a78246c4b8852e4562f8792d03770c939aa1cc15ed3d53db3ed8faf",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2Fnwzl7d%2Fwsb_discussion_today%2F&amp;rut=6bc067e861a6c6a566d06f5928b4870cd08c1b7a8868e493642f9f238020e50a",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2F14b963y%2Fmy_lifes_over_heres_my_final_advice%2F&amp;rut=d696c0e47f9d2db978e602b2baf340f65e32ee34e6b477954838d8a2a4899454",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2F17sa4n3%2Fmy_losses_are_230k_in_3_months%2F&amp;rut=03f28b660cf8966020b842406dc6cdde9bece818bd4fcdbf04b58197aedb5e72",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2F1bbw0mw%2Fgenuine_question_im_new_to_this_so_whats_stopping%2F&amp;rut=e33458a18cd2be77d6cc11a9d796d62e9597b90f00d2379d42b08793caedb677",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2Fqdpchl%2Ftoday%2F&amp;rut=5dd06474a7cbe61065166b9bcc4326536822c2847feb0d676467e95d873b21df",
+        "//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.reddit.com%2Fr%2Fwallstreetbets%2Fcomments%2F16vo3s7%2Fmy_loss_today_and_advice_for_others%2F&amp;rut=7358e11472682f8f2d6b29fec6b5153e8d60ba11cde54178b1a487e639f739a4"
+      ],
+      "score": 0.233,
+      "tier": "\u26aa NEUTRAL",
+      "avg_sentiment": -0.1,
+      "velocity": 1,
+      "company_name": "Reddit"
+    }
+  ]
+}

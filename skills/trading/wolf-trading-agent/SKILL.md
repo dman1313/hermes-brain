@@ -1,7 +1,7 @@
 ---
 name: wolf-trading-agent
 description: Wolf Trading Agent — daily scanner of Reddit, Twitter/X, and financial news for stock/options trade signals. Scores and ranks potential trades using multi-source fusion.
-version: 1.3.0
+version: 1.4.0
 author: Hermes Agent
 license: MIT
 tags: [trading, reddit, twitter, news, stock-scanner, options, signals, wolf]
@@ -55,17 +55,39 @@ python3 ~/.hermes/skills/ragflow/scripts/wolf_ragflow_enhancer.py --scan output/
 ## Architecture
 ## Scanners
 
-### Reddit (⚠️ Broken as of 2026-05)
+### Reddit (✅ Fixed 2026-06-24 — 3-tier backend)
 
-The DuckDuckGo-based Reddit scanner returns empty post content — titles are just "Link to reddit.com" and selftext is "The site owner hides the web page description." The scanner still returns results but they have no usable text for ticker extraction or sentiment analysis.
+The Reddit scanner now has **3 auto-selected backends** in priority order:
 
-**Workaround**: Fetch each post URL with `.json` suffix (`curl <reddit_url>.json -H 'User-Agent: wolf/1.0'`) to get actual post content. Or switch to a different Reddit data source (PRAW, pushshift, etc.).
+| Backend | Auth | Coverage | Content Quality |
+|---------|------|----------|----------------|
+| **PRAW** (OAuth) | `REDDIT_CLIENT_ID` + `REDDIT_CLIENT_SECRET` | All subreddits | ✅ Full post body, scores, comments |
+| **RSS** (standalone) | None | WSB only (others rate-limited) | ✅ Real titles + HTML body |
+| **DDG** (fallback) | None | All subreddits | ⚠️ Titles only, body masked |
 
-| Scanner | Backend | Auth Required | Notes |
-|---------|---------|---------------|-------|
-| Reddit | DuckDuckGo `site:reddit.com` | No | Searches r/WSB, r/stocks, r/options, etc. |
-| Twitter/X | `xurl` CLI | Yes (OAuth 2.0) | Falls back gracefully if not configured |
-| News | GNews API | No (free tier) | Structured JSON, works standalone + cron. 100 req/day, 12h delay. |
+**Auto-detection logic:**
+1. If `REDDIT_CLIENT_ID` + `REDDIT_CLIENT_SECRET` env vars set → use **PRAW** (full content, all subs)
+2. Otherwise → **RSS for WSB** + **DDG for all subs** (titles only)
+3. Results merged, deduplicated, and scored
+
+**Getting PRAW working (best option):**
+1. Create a free Reddit app at https://www.reddit.com/prefs/apps (type: "script", takes 2 min)
+2. Copy `client_id` and `client_secret` from the app page
+3. Add to your environment or `~/.hermes/.env`:
+   ```
+   REDDIT_CLIENT_ID=your_client_id
+   REDDIT_CLIENT_SECRET=your_client_secret
+   ```
+4. PRAW is already installed (`uv pip install praw`)
+5. No PRAW needed? The RSS+DDG fallback still works — WSB titles provide real ticker signals
+
+**Without PRAW:** The RSS feed for WSB returns real post titles and HTML content. It's limited to r/wallstreetbets (other subs return 429), but WSB is Wolf's primary source. Expect 20-25 posts per scan. DDG adds broader subreddit coverage with titles only.
+
+| Scanner | Backend | Auth Required | Status | Notes |
+|---------|---------|---------------|--------|-------|
+| Reddit | PRAW/RSS/DDG (auto-select) | PRAW needs `REDDIT_CLIENT_ID` + `REDDIT_CLIENT_SECRET` | ✅ Working — 3-tier backend fixed Jun 24 | WSB RSS returns 20-25 posts with real content. Full PRAW coverage with free Reddit app. |
+| Twitter/X | `xurl` CLI | Yes (OAuth 2.0 + prepaid credits) | ❌ CreditsDepleted | OAuth works, but all data endpoints blocked by $0 credit balance. Top-up at developer.x.com. `xurl user` lacks `-n` flag — fixed in code. |
+| News | GNews API | Yes (free API key) | ✅ Working | Used `apikey` param fixed Jun 17 (was `token` — silent failure). Confirmed working Jun 24. 100 req/day, 12h article delay. |
 
 ### Scoring Formula
 
@@ -150,6 +172,7 @@ scripts/
     ├── twitter_scanner.py    # Twitter via xurl CLI (or skip)
     └── news_scanner.py       # News via GNews API (free tier, structured JSON)
 references/
+├── alpaca-rest-spread-calc.md   # Per-ticker bull/put spread calculation via Alpaca REST API (bid/ask, strike decoding, RoC/breakeven) — use when constructing a spread from Alpaca snapshots
 ├── vertical-spread-playbook.md  # Dwayne's small-account spread rules
 ├── alpaca-options-chain.md      # Alpaca options API with real Greeks (free tier works)
 ├── per-contract-greeks.md       # Per-strike delta/IV/bid-ask extraction from Alpaca snapshots (for trade construction from aggregate scan results)
@@ -263,11 +286,17 @@ If `alpaca_options_scan.py` fails or you need per-ticker deep-dive, use the patt
 
 ## Pitfalls
 
+### Circuit Breaker
+External data sources can silently block or time out. The Reddit/DDG scanner uses a **consecutive-failure circuit breaker** (aborts after 3 consecutive failures) to prevent the whole scan from hanging. See `references/circuit-breaker-pattern.md` for the reusable pattern.
+
 ### Data Sources
-- **🔴 GNEWS API KEY HARDCODED IN SHELL SCRIPT**: `scripts/wolf_scan_gnews.sh` line 3 has `export GNEWS_API_KEY="ef9382a7b540143cbc64e9a0148b674f"` in plaintext. This key is visible to any process on the system. **ROTATE THIS KEY** and source from environment only. Found in security audit 2026-05-30.
-- **Reddit API changes**: Reddit's JSON API now returns 403 for all unauthenticated requests. Using DuckDuckGo search as backend instead. If DuckDuckGo rate-limits, reduce SEARCH_TERMS per subreddit.
-- **Reddit scanner returns empty post text**: As of 2026-05, DuckDuckGo search results for Reddit return `title: "Link to reddit.com"` and `selftext: "The site owner hides the web page description."` — no actual post content. The scanner still counts mentions from titles/URLs but sentiment analysis gets nothing. Fix: fetch the actual Reddit JSON for each post URL (`curl <url>.json`) to get real content, or switch to a different Reddit data source.
-- **Twitter without xurl**: Gracefully skips Twitter if `xurl` not installed/authenticated. Score still works with Reddit + News alone.
+- **🔴 GNEWS API KEY HARDCODED IN SHELL SCRIPT**: `scripts/wolf_scan_gnews.sh` line 3 has the GNews API key in plaintext. **ROTATE THIS KEY** and source from environment only. Found in security audit 2026-05-30. **UPDATE:** The `apikey` parameter bug (was `token`) fixed Jun 17 and confirmed working Jun 24.
+- **Reddit API changes**: Reddit's JSON API now **blocks all unauthenticated requests** from this VPS (returns "blocked by network security"). The old reddit.com and old.reddit.com are both blocked. The Reddit scanner was rewritten (2026-06-24) with a 3-tier backend: PRAW OAuth (full coverage), WSB RSS (standalone, works), and DDG fallback (titles only). Install PRAW with PRAW for full Reddit access.
+### Twitter/xurl — CreditsDepleted (confirmed 2026-06-24)
+The X API requires prepaid credits (min $5). All data endpoints fail with `CreditsDepleted` when balance is $0. OAuth and `whoami` still work because they hit cached/highly-ratelimited endpoints. **Fix:** top up at developer.x.com.
+
+### xurl `user` subcommand lacks `-n` flag
+The `xurl user <username>` subcommand does NOT support the `-n`/`--max-results` flag that `xurl search` supports. Calling `xurl user unusual_whales -n 5` returns a *usage error*, not tweets. This produces empty stdout → JSON decode failure → the scanner reports "invalid JSON from xurl" for every account. **Fix:** drop the `-n` flag from `xurl user` calls and truncate results at the Python level with `tweets[:max_results]`. Confirmed fixed in `twitter_scanner.py` line 76/90 as of 2026-06-24.
 - **Market hours**: Best run before market open (8 AM ET) on weekdays. Running on weekends produces low-signal results.
 - **GNews API free tier**: 100 requests/day, 12-hour article delay. 14 queries × 5 results = 70 req/scan. Set `GNEWS_API_KEY` env var (already in `~/.hermes/.env`, confirmed 2026-05-29) or pass `--apikey`. Sign up free at gnews.io/register — no credit card.
 - **Free news sources that work**: GNews API (primary, free tier, 12h delay). CNBC RSS (`search.cnbc.com/rs/search/combinedcms/view.xml`) and MarketWatch RSS (`feeds.marketwatch.com/marketwatch/topstories`) as fallback. Yahoo Finance RSS returns empty.

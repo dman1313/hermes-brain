@@ -1,7 +1,7 @@
 ---
 name: external-tool-installation
 description: Install external tools and services from GitHub repos — AI agent toolkits, npm packages, Docker Compose stacks. Covers systemd headless wrapping, port conflict resolution, Caddy reverse proxy integration, and post-install polish.
-version: 1.2.0
+version: 1.3.0
 author: Hermes
 metadata:
   hermes:
@@ -22,9 +22,41 @@ Install companion tools that extend an AI agent's internet access, meta-promptin
 1. **Fetch repo info** — `curl` the GitHub API for name/description/language/topics
 2. **Read install guide** — check README.md AND any `docs/install.md` for AI-agent-oriented instructions
 3. **Check prerequisites** — verify Node.js, pipx, ffmpeg, etc. before installing
-4. **Install** — follow the tool's canonical install method (pipx > venv pip > npm)
+4. **Install** — follow the tool's canonical install method (see Preferred Install Methods below)
 5. **Fix broken deps** — run the tool's doctor/check command, fix anything below ✅
 6. **Verify** — final health check
+
+## Preferred Install Methods (precedence order)
+
+When a tool doesn't specify an install method, use this precedence:
+
+| Priority | Method | When to use | Example |
+|----------|--------|-------------|---------|
+| 1 | `uv tool install` | Python CLI tools (replaces pipx, avoids PEP 668) | `uv tool install ruff` |
+| 2 | `npm install -g` | Node.js CLI tools, or when cargo/pip fail | `npm install -g @ast-grep/cli` |
+| 3 | `cargo install` | Rust tools (slow but reliable if Rust is available) | `cargo install ast-grep --locked` |
+| 4 | Prebuilt binary | Download from GitHub releases | `curl -sL install.sh \| bash` |
+| 5 | `pipx install` | Python CLI tools (if uv unavailable) | `pipx install tool-name` |
+
+**Key rules:**
+- `uv tool install` is preferred over `pipx` — it's faster, already installed on this VPS, and handles PATH automatically
+- `uv tool install` avoids PEP 668 errors that block bare `pip install` on Ubuntu 24.04+
+- `npm install -g` is the universal fallback — works for any tool that ships an npm package, even non-JS ones (e.g. `@ast-grep/cli`)
+- For MCP servers: use `hermes mcp add NAME --command <cmd> -- <args>` (see hermes-agent skill). Only fall back to `hermes config set mcp_servers.<name>.<key>` if `hermes mcp add` isn't available. Note: `hermes config set` CANNOT set nested env vars — use `hermes mcp add --env KEY=VALUE` or Python YAML editing instead (see pitfall #17).
+
+## Evaluating a Batch of Repos
+
+When the user presents a list of repos/tools to evaluate:
+
+1. **Check what's already installed** — `which <tool>`, `--version`, check Hermes MCP servers
+2. **Assess against actual priorities** — filter ruthlessly against what the user actually works on (trading, newsletters, comms), not theoretical usefulness
+3. **Split into three buckets**: already-have/redundant, useful-for-current-work, not-relevant-now
+4. **Install the useful ones** — don't just list them, actually install and verify
+5. **Wire MCP servers** — add to Hermes config with `hermes mcp add`
+6. **Flag missing credentials** — note which tools need API keys/tokens set before they're functional
+7. **Give honest verdict** — "installed at X, here's whether to wire it in" — don't oversell
+
+See `references/cli-tools-batch-install-2026-06.md` for a worked example (ruff, ast-grep, pre-commit, zeabur, context7).
 
 ---
 
@@ -389,6 +421,22 @@ Dev servers are fine for exploration. For persistence, wrap in systemd once the 
     uv pip install -e ".[extras]" --no-build-isolation
     ```
     The `--no-build-isolation` flag tells pip/uv to use the venv's installed packages (including maturin) instead of creating an isolated build env. Without it, maturin isn't found even if installed globally.
+12. **PEP 668 blocks `pip install` on Ubuntu 24.04+** — `pip install <tool>` fails with `externally-managed-environment` error. Do NOT use `--break-system-packages`. Instead: `uv tool install <tool>` (preferred) or `pipx install <tool>` (fallback). Both create isolated environments and link the CLI binary to PATH.
+13. **npm global install as fallback for non-JS CLI tools** — tools like `ast-grep` ship npm wrappers (`@ast-grep/cli`) even though they're Rust binaries. When `cargo install` times out or isn't available, `npm install -g @<scope>/cli` often works. Check the tool's docs for npm package name — it's not always the same as the tool name.
+14. **Verify a tool actually supports MCP before adding as MCP server** — not every CLI tool is an MCP server. Before adding to `mcp_servers`, run `<tool> --help` and check for an `mcp` subcommand or `--mcp` flag. If the tool is purely a CLI (like `zeabur`, `gh`, `ruff`), it belongs on PATH only — not in Hermes MCP config. Adding a non-MCP tool as an MCP server causes silent startup failures.
+15. **API key truncation in model output** — the agent model may truncate API keys in output (rendering `fc-74a83e1...219f092910` as `fc-74a...2910`). When writing keys to config files, verify with `repr()` and `len()` in Python, not by reading the displayed value. The file usually stores the full key even when the display shows a truncated version. Always verify: `print(f'Length: {len(key)}, starts: {repr(key[:10])}')`.
+16. **Headless VPS blocks browser-based auth** — tools like `zeabur auth login` try to open a browser for OAuth. On a headless VPS, this fails with `xdg-open: no method available`. Workaround: set the token via environment variable (`ZEABUR_TOKEN`) or config file instead. If the tool only supports browser auth, the user must run the login flow from a machine with a browser and copy the token.
+17. **`hermes config set` can't set nested MCP server env vars** — `hermes config set mcp_servers.firecrawl.env.FIRECRAWL_API_KEY <key>` fails with `Invalid environment variable name`. The CLI tries to treat the dotted key as an env var name. Workaround: use `hermes mcp add NAME --command <cmd> -- <args>` (preferred), or edit the config with Python YAML:
+    ```python
+    import yaml
+    with open('/home/ubuntu/.hermes/config.yaml', 'r') as f:
+        config = yaml.safe_load(f)
+    config['mcp_servers']['firecrawl']['env'] = {'FIRECRAWL_API_KEY': '...'}
+    with open('/home/ubuntu/.hermes/config.yaml', 'w') as f:
+        yaml.dump(config, f, default_flow_style=False, sort_keys=False)
+    ```
+    The `hermes mcp add` command handles env vars via `--env KEY=VALUE` flags and is the preferred path. Only fall back to YAML editing when `hermes mcp add` doesn't support the specific configuration (e.g. HTTP headers, complex env setups).
+18. **Not every CLI tool is an MCP server** — `zeabur`, `gh`, `ruff` are pure CLIs with no MCP mode. Before adding to `mcp_servers`, check `<tool> --help` for an `mcp` subcommand. If absent, the tool belongs on PATH only. Adding a non-MCP tool as an MCP server causes silent startup failures.
 
 ---
 

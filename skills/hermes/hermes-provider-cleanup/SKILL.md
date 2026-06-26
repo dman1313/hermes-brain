@@ -63,10 +63,14 @@ Create a target list based on API health check results:
 
 | Category | What to Remove | Example |
 |----------|---------------|---------|
-| **Failed providers** | Full provider entry from all 3 stores | anthropic (401), kimi (404), minimax (404) |
+| **Failed providers** | Full provider entry from all 3 stores | anthropic (401), kimi (404) |
 | **OpenRouter failures** | Specific model entries in cache only | openai/gpt-5*, deepseek/deepseek-v4-* on OR |
 | **Stale status flags** | Reset misleading status in auth.json | zai marked "exhausted" but working |
 | **No-key providers** | Full entries with no credentials | mistral, ollama-cloud, togetherai, wafer.ai |
+
+**MiniMax note (2026-06-18):** MiniMax works with Coding Plan keys (`sk-cp-` prefix, ~125 chars). These keys authenticate on `api.minimax.io/v1/chat/completions`. The regular `sk-api-` keys may return 402 (no balance) while `sk-cp-` keys work via the Coding Plan billing. Both key types go in the same `minimax` credential pool. Test: `curl -X POST https://api.minimax.io/v1/chat/completions -H "Authorization: Bearer KEY" -d '{"model":"MiniMax-M3","max_tokens":5,"messages":[{"role":"user","content":"hi"}]}'`
+
+**MiniMax note:** MiniMax works with Z.AI coding plan keys (`sk-cp-` prefix). These keys return 401 on Z.AI endpoints but 200 on `api.minimax.io`. Direct MiniMax keys (`sk-api-` prefix) need account balance (402 if empty).
 
 ### Step 3: Clean Models Cache
 
@@ -311,7 +315,23 @@ The `last_status` field in auth.json credential pools is not actively maintained
 ### 6. Context Window Matters
 When adding provider models to config.yaml, use realistic context_window and max_tokens values from the provider's documentation. Setting them too high will cause Hermes to attempt large contexts that the model can't actually handle.
 
-### 8. Config Cross-References — Check ALL Sections
+### 9. Z.AI Has Two Separate Endpoint Families
+
+Z.AI (`api.z.ai`) runs TWO independent API surfaces with different key permissions:
+
+| Family | Base Path | Auth Format | Key Type That Works |
+|--------|-----------|-------------|---------------------|
+| Anthropic-compatible | `/api/v1/*` | `x-api-key` header | MCP keys (models only, 403 on messages) |
+| OpenAI-compatible | `/api/coding/paas/v4/*` | `Authorization: Bearer` | Inference keys |
+
+**Hermes uses the OpenAI-compatible family** via `zai-coding-plan` provider (`/api/coding/paas/v4`).
+**Claude Code needs the Anthropic family** for model validation but can't infer on it — requires a proxy.
+
+The models cache has TWO Z.AI entries: `zai` (Anthropic endpoints) and `zai-coding-plan` (OpenAI endpoints). The Anthropic family uses slug names (`gpt-4o`, `gpt-4o-mini`) while the OpenAI family uses GLM names (`glm-5.2`, `glm-5.1`).
+
+Full endpoint map: see `coding-agent-clis` skill → `references/zai-endpoint-discovery.md`.
+
+### 10. Config Cross-References — Check ALL Sections
 
 When removing a provider, it's not enough to delete its `providers:` entry. The provider may be referenced in many other config sections. After cleanup, grep for the removed provider name across the whole config:
 
@@ -352,6 +372,59 @@ print(f'Key length: {len(val)} chars, starts with: {val[:4]}...')
 If the length matches the expected key format (e.g. 32 hex chars for GNews, 64 for most provider keys), the write succeeded. If it's 4 chars (`***`), the masking leaked into the file and you need to rewrite.
 
 **Pitfall:** Inline `echo >> .env` and `sed -i` can accidentally write the masked placeholder instead of the real value if the shell variable was already masked. Safest approach: write a Python helper script that takes the key as `sys.argv[1]` and writes it directly, bypassing any shell-level masking.
+
+## Adding a New Provider (Three-Store Wiring)
+
+When adding a new provider (e.g. MiniMax), three stores must be updated together:
+
+### 1. `.env` — API Key
+```bash
+# Uncomment or add the key line
+MINIMAX_API_KEY=sk-api-xxxxx
+MINIMAX_BASE_URL=https://api.minimax.io/v1
+```
+
+### 2. `config.yaml` — Provider Block
+```yaml
+providers:
+  minimax:
+    base_url: https://api.minimax.io/v1
+    models:
+      MiniMax-M3:
+        id: MiniMax-M3
+        name: MiniMax M3
+        context_window: 1000000
+        max_tokens: 16384
+        reasoning: true
+```
+
+### 3. `auth.json` — Credential Pool
+```python
+import json, os
+auth_path = os.path.expanduser('~/.hermes/auth.json')
+with open(auth_path) as f:
+    auth = json.load(f)
+auth['credential_pool']['minimax'] = [{
+    'api_key': api_key,
+    'base_url': 'https://api.minimax.io/v1',
+    'last_status': None,
+    'last_used': None
+}]
+with open(auth_path, 'w') as f:
+    json.dump(auth, f, indent=2)
+```
+
+### 4. Verify
+```bash
+hermes config check 2>&1 | grep -i minimax  # Should show ✓ for key + base_url
+```
+
+**Pitfall:** The `.env` file is credential-masked in tool output. Verify key length, not content:
+```python
+line = [l for l in open(os.path.expanduser('~/.hermes/.env')) if l.startswith('MINIMAX_API_KEY')][0]
+val = line.strip().split('=', 1)[1]
+print(f'Key length: {len(val)} chars')  # Should be >50, not 3 (which means masked)
+```
 
 ## Verification
 

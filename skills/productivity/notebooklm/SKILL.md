@@ -13,7 +13,11 @@ The binary is `nlm` from the `notebooklm-mcp-cli` package. Installed at `/home/u
 2. **ALWAYS confirm before delete, generate, download, or query with --save-as-note.** Read-only commands (list, status, auth check, source add, history) are autonomous.
 3. **Use `nlm studio status <id>` to poll generation progress** — audio/video takes 1-5 minutes.
 4. **Sessions expire in ~20 min** — re-auth when commands fail. On paid tier, higher limits.
-5. **Paid tier supports ~200 queries/day** with faster generation.
+5. **Use NotebookLM's native generation for artifacts, not local files.** When the user asks to create study resources, guides, flashcards, quizzes, slides, videos, audio reviews, or any learning artifact FROM a notebook, use `nlm audio create`, `nlm report create`, `nlm flashcards create`, `nlm quiz create`, `nlm slides create`, `nlm mindmap create`, `nlm video create`, `nlm infographic create`, `nlm data-table create`. Do NOT write local markdown files as a substitute — the notebook IS the production environment. Use queries (`nlm notebook query`) to analyze the sources first, then trigger generation inside NotebookLM. Local files are supplementary (for custom content the notebook can't generate), not the primary deliverable. This is a recurring pattern — always default to NotebookLM studio generation.
+
+6. **Batch generation**: All 9 artifact types can be triggered in sequence (each takes ~5-30s to start). They generate in parallel on NotebookLM's side. Poll with `nlm studio status <id>` after starting all of them. Typical completion: mindmap and flashcards are fastest (<30s), audio/video/slides take 1-5 minutes.
+
+7. **Paid tier supports ~200 queries/day** with faster generation.
 
 ## Key Notebooks (alias → ID)
 
@@ -21,6 +25,7 @@ The binary is `nlm` from the `notebooklm-mcp-cli` package. Installed at `/home/u
 - `agent` → Agent notebook (40 sources)
 - `bio` → IGCSE Bio (96 sources, 84 past papers) — ID: `e621431b-2a33-4f44-b23b-4a86e2349cad`
 - H1 AI Brain: `e0da9697-4ba3-466f-9a59-1756dd3e5877`
+- `igcse-physics` → IGCSE Physics (105 sources, past papers 2019-2025) — ID: `6b22f008-aec4-447b-8070-e28beb91efde`
 
 ## Command Mapping
 
@@ -66,7 +71,7 @@ The binary is `nlm` from the `notebooklm-mcp-cli` package. Installed at `/home/u
 | Mind map | `nlm mindmap create <id> --confirm` |
 | Quiz | `nlm quiz create <id> --confirm` |
 | Flashcards | `nlm flashcards create <id> --confirm` |
-| Data table | `nlm data-table create <id> --description "desc" --confirm` |
+| Data table | `nlm data-table create <id> "desc" --confirm` |
 
 ### Artifact Management
 | What you need | Run |
@@ -148,6 +153,10 @@ The binary is `nlm` from the `notebooklm-mcp-cli` package. Installed at `/home/u
 3. **Scanned PDFs**: When adding scanned PDFs (no text layer), pymupdf `get_text()` returns empty. Use `get_pixmap(dpi=200)` to convert pages to images, then OCR/vision to extract text. Alternatively, NotebookLM handles scanned PDFs natively when added as sources — the OCR issue only matters for local extraction.
 
 4. **Large source lists**: Notebooks with 50+ sources produce long JSON from `nlm source list`. Pipe through grep/jq to filter rather than reading the full dump.
+
+5. **`nlm data-table create` syntax**: The `description` is a POSITIONAL argument, not a flag. Correct: `nlm data-table create <id> "my description" --confirm`. Wrong: `nlm data-table create <id> --description "my description" --confirm` (fails with "No such option").
+
+6. **Mindmap type reporting**: `nlm mindmap create` artifacts may show as type `flashcards` in `nlm studio status` output. This is a NotebookLM UI quirk — the mind map is still created correctly and accessible in the notebook's Studio tab.
 
 ## Content Extraction Patterns
 

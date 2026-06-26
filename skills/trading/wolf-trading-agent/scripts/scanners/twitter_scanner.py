@@ -70,10 +70,14 @@ def xurl_search(query: str, max_results: int = 10) -> list[dict]:
 
 
 def xurl_timeline(username: str, max_results: int = 5) -> list[dict]:
-    """Pull a user's timeline."""
+    """Pull a user's timeline.
+
+    NOTE: xurl user subcommand does not support -n/--max-results.
+    We fetch and truncate at the Python level.
+    """
     try:
         result = subprocess.run(
-            ["xurl", "user", username, "-n", str(max_results)],
+            ["xurl", "user", username],
             capture_output=True,
             timeout=30,
             text=True,
@@ -83,7 +87,7 @@ def xurl_timeline(username: str, max_results: int = 5) -> list[dict]:
             return []
         data = json.loads(raw)
         tweets = data.get("data", [])
-        return tweets
+        return tweets[:max_results]  # truncate at Python level since xurl user has no -n flag
     except json.JSONDecodeError as e:
         print(f"  [xurl JSON error] @{username}: invalid JSON from xurl: {e}",
               file=sys.stderr)
