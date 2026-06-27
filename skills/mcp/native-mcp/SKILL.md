@@ -98,6 +98,7 @@ You can then use the tools naturally -- just ask the agent to get the current ti
 - **Global install over npx for slow servers**: For MCP servers where `npx` adds 30s+ startup time, install globally with `npm install -g <package>` and use the binary name directly in `command:`. This avoids npx's package resolution on every connection.
 - **Restart required**: MCP server changes require `hermes gateway restart` — they do not hot-reload.
 - **Verification**: Always run `hermes mcp list` after adding a server to confirm it shows as enabled, then `hermes mcp test <name>` to verify the connection.
+- **Zombie MCP processes from broken configs**: When `args` is a JSON string (`'["-y", "pkg"]'`) instead of a proper YAML list (`["-y", "pkg"]`), Hermes spawns new connection attempts endlessly. Each attempt launches a subprocess that never completes — these pile up as zombie MCP processes consuming RAM (observed: 20 processes using 1.4GB RAM). **To prevent:** always write `args` as a YAML list (dash-separated lines) in `config.yaml`, never as a quoted JSON string. **To recover:** (1) kill zombies: `pkill -f "firecrawl-mcp\|context7-mcp\|scrapling.*mcp"`; (2) fix the `args` format to proper YAML list; (3) disable the broken MCP server (`enabled: false`) until the root cause is resolved. After fixing, the running gateway still has old zombie processes — only a gateway restart (from outside the process) fully cleans up.
 
 ## Configuration Reference
 

@@ -205,7 +205,16 @@ The safe pattern: ALWAYS assign a model. For script-driven jobs, use the cheapes
 3. For complex tasks, ensure using k2p5 or equivalent
 4. Monitor error logs for specific failure reasons
 
-### Issue: Cronjob creation fails with provider error (HTTP 400/429)
+### Issue: Cronjob fails with "no API key found" or falls through to wrong provider
+
+**Cause:** Job has `model: null` (no model assigned). The cron engine falls through to the default provider (`model.default.provider` in config.yaml), which may not have a valid API key configured.
+
+This is a **silent fail** — the job shows `last_status: error` with NO useful output in the cron log directory. The error only surfaces in `~/.hermes/logs/errors.log`:
+```
+RuntimeError: Provider 'minimax' is set in config.yaml but no API key was found.
+```
+
+**Solution:** Always pin cron jobs to an explicit model/provider combo, never leave `model: null`. Use `cronjob(action='update', job_id='...', model={'model': 'DEEPSEEK_CHAT', 'provider': 'deepseek'})` for simple tasks that don't need a specific model's capabilities.
 
 **Cause:** The selected provider or model rejected the request.
 
